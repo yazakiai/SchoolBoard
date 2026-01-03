@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>職員室ダッシュボード</title>
+    
+    <link rel="manifest" href="manifest.json">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /* 全体に M PLUS Rounded 1c を適用 */
+        body, button, input, textarea, div, span, p, h1, h2, h3, h4, h5, h6 {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+        }
+
+        body {
+            background-color: #F0F2F5;
+            color: #333333;
+            overflow: hidden;
+        }
+
+        /* --- Dashboard Text Sizes (修正版) --- */
+        .text-date { font-size: 3.5rem; letter-spacing: 0.05em; line-height: 1; font-weight: 800; } 
+        
+        /* 時間割表示用 (さらにサイズダウン) */
+        .text-period-prefix { font-size: 1.8rem; font-weight: 800; color: #BFDBFE; margin-right: 0.5rem; vertical-align: baseline; }
+        .text-period-name { font-size: 5rem; line-height: 1; font-weight: 800; }
+        .text-period-time { font-size: 2.5rem; letter-spacing: 0.05em; font-weight: 800; }
+        
+        .text-notice-title { font-size: 2.5rem; line-height: 1.2; font-weight: 800; }
+        
+        /* Glass Card */
+        .glass-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Notice Card */
+        .notice-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 9rem; /* 少し高さを減らす */
+            margin-bottom: 1rem;
+        }
+
+        /* Icon */
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+            margin-right: 1.5rem;
+        }
+
+        /* Ticker Animation */
+        .ticker-wrap { 
+            width: 100%; 
+            overflow: hidden; 
+            white-space: nowrap; 
+            mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);
+        }
+        .ticker-content { 
+            display: inline-block; 
+            padding-left: 100%; 
+            animation: ticker 40s linear infinite;
+        }
+        @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* Animation: Cascade (Entry) */
+        @keyframes slideUpFade {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .anim-cascade {
+            animation: slideUpFade 0.5s ease-out forwards;
+        }
+
+        /* Edit/Smartphone Screen Styles */
+        .edit-list-item:active { background-color: #E5E7EB; }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-[#F0F2F5]">
+
+    <div id="screen-entrance" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#F0F2F5] space-y-8">
+        <h1 class="text-5xl font-bold text-gray-700 mb-8">職員室ダッシュボード</h1>
+        
+        <button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-blue-800">
+            大画面表示
+        </button>
+        
+        <button onclick="showScreen('smartphone')" class="w-80 bg-white text-gray-700 border-4 border-gray-200 py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-100">
+            スマホ表示
+        </button>
+        
+        <button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-900">
+            データ入力
+        </button>
+    </div>
+
+    <div id="screen-dashboard" class="hidden h-full flex flex-col">
+        
+        <div class="flex-1 flex flex-col p-6 pb-2 space-y-6 overflow-hidden">
+            
+            <div class="flex items-center h-24 space-x-6">
+                <div class="glass-card px-10 h-full flex items-center justify-center flex-shrink-0 bg-white">
+                    <p class="text-date text-gray-700" id="current-date">--月--日</p>
+                </div>
+                <div class="flex-1 h-full flex items-center overflow-hidden px-6">
+                    <div id="top-event-container" class="text-5xl text-gray-700 font-bold truncate w-full">
+                        読み込み中...
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-1 space-x-6 overflow-hidden pb-2">
+                <div class="w-[70%] flex flex-col h-full relative">
+                    <div id="display-notices" class="flex-1 flex flex-col justify-start overflow-hidden pt-2">
+                        </div>
+                </div>
+
+                <div class="w-[30%] flex flex-col space-y-6">
+                    
+                    <div id="schedule-card" class="glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-blue-600 shadow-xl border-none">
+                        <div id="schedule-container" class="w-full">
+                            <div class="mb-2 flex items-baseline justify-center">
+                                <span class="text-period-prefix text-blue-200" id="now-prefix">いま</span>
+                                <span class="text-period-name text-white" id="current-period-name">--</span>
+                            </div>
+                            <div id="time-box" class="bg-blue-500 rounded-xl py-2 px-6 inline-block">
+                                <p class="text-period-time tabular-nums leading-none text-white" id="current-period-time">--:--</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card flex-1 p-6 flex flex-col justify-center items-center bg-white relative border-t-8 border-gray-200">
+                        <p class="text-2xl text-gray-300 font-bold text-center">Free Space<br>(Topics)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center relative z-20 shadow-sm px-4">
+            <div class="pl-4 pr-6 bg-white h-full flex items-center z-30 flex-shrink-0">
+                <span class="text-red-600 text-3xl font-bold">臨時</span>
+            </div>
+            <div class="flex-1 overflow-hidden h-full flex items-center mr-4">
+                <div class="ticker-wrap">
+                    <div id="urgent-text-container" class="ticker-content text-4xl text-red-600 font-bold">
+                        </div>
+                </div>
+            </div>
+            <div class="h-full flex items-center justify-center flex-shrink-0 py-1 bg-white pl-4 border-l border-gray-100">
+                 <div id="qrcode" class="p-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-smartphone" class="hidden h-full bg-gray-50 fixed inset-0 z-50 overflow-hidden flex flex-col">
+        <div class="bg-white px-4 py-4 shadow flex justify-between items-center z-10">
+            <h2 class="text-xl font-bold text-gray-700">連絡事項一覧</h2>
+            <button onclick="showScreen('entrance')" class="text-blue-600 font-bold border border-blue-600 px-3 py-1 rounded-lg text-sm">戻る</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 py-4 pb-20">
+            <div id="phone-list-container" class="space-y-3">
+                </div>
+        </div>
+    </div>
+
+    <div id="screen-edit" class="hidden h-full bg-gray-50 fixed inset-0 z-50 overflow-hidden flex flex-col">
+        <div class="bg-white px-4 py-4 shadow flex justify-between items-center z-10">
+            <h2 class="text-xl font-bold text-gray-700">データ管理</h2>
+            <button onclick="showScreen('entrance')" class="text-blue-600 font-bold border border-blue-600 px-3 py-1 rounded-lg text-sm">戻る</button>
+        </div>
+
+        <div class="p-4 bg-gray-50">
+            <button onclick="openModal('create')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md active:bg-blue-700 flex items-center justify-center">
+                <span class="text-2xl mr-2">+</span> 新規連絡を作成
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-4 pb-20">
+            <p class="text-xs text-gray-400 mb-2 pl-1">※タップして編集・削除</p>
+            <div id="edit-list-container" class="space-y-2">
+                </div>
+        </div>
+
+        <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+                <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 id="modal-title" class="font-bold text-lg text-gray-700">編集</h3>
+                    <button onclick="closeModal()" class="text-gray-400 text-2xl font-bold">&times;</button>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <div class="flex space-x-1 overflow-x-auto pb-2">
+                        <label class="flex-1 cursor-pointer min-w-[3rem]"><input type="radio" name="modalType" value="event" class="peer hidden"><div class="py-2 rounded-lg border-2 border-gray-200 text-center font-bold text-gray-400 text-xs peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50">行事</div></label>
+                        <label class="flex-1 cursor-pointer min-w-[3rem]"><input type="radio" name="modalType" value="urgent" class="peer hidden"><div class="py-2 rounded-lg border-2 border-gray-200 text-center font-bold text-gray-400 text-xs peer-checked:border-red-500 peer-checked:text-red-600 peer-checked:bg-red-50">臨時</div></label>
+                        <label class="flex-1 cursor-pointer min-w-[3rem]"><input type="radio" name="modalType" value="common" class="peer hidden"><div class="py-2 rounded-lg border-2 border-gray-200 text-center font-bold text-gray-400 text-xs peer-checked:border-purple-500 peer-checked:text-purple-600 peer-checked:bg-purple-50">共通</div></label>
+                        <label class="flex-1 cursor-pointer min-w-[3rem]"><input type="radio" name="modalType" value="staff" class="peer hidden"><div class="py-2 rounded-lg border-2 border-gray-200 text-center font-bold text-gray-400 text-xs peer-checked:border-orange-500 peer-checked:text-orange-600 peer-checked:bg-orange-50">職員</div></label>
+                        <label class="flex-1 cursor-pointer min-w-[3rem]"><input type="radio" name="modalType" value="student" class="peer hidden" checked><div class="py-2 rounded-lg border-2 border-gray-200 text-center font-bold text-gray-400 text-xs peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50">生徒</div></label>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-1">連絡内容</label>
+                        <input type="text" id="modal-input-title" class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 text-lg" placeholder="内容を入力...">
+                    </div>
+
+                    <div class="pt-2 flex flex-col space-y-3">
+                        <button onclick="saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
+                        <button onclick="deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold text-lg">このデータを削除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 設定: 時間割 ---
+        const schedule = [
+            { name: "SHR", start: "08:35", end: "08:45" },
+            { name: "1限", start: "08:50", end: "09:40" },
+            { name: "2限", start: "09:50", end: "10:40" },
+            { name: "3限", start: "10:50", end: "11:40" },
+            { name: "4限", start: "11:50", end: "12:40" },
+            { name: "昼休", start: "12:40", end: "13:25" },
+            { name: "5限", start: "13:25", end: "14:15" },
+            { name: "6限", start: "14:25", end: "15:15" }
+        ];
+
+        // --- データ ---
+        let notices = [
+            { title: "【台風】本日は15:00一斉下校となります", target: "urgent" },
+            { title: "【全校】避難訓練は13:30開始です", target: "event" },
+            { title: "ネットワークメンテナンスのお知らせ", target: "common" },
+            { title: "進路希望調査票の提出締切 (本日17:00)", target: "student" },
+            { title: "放課後の職員会議は第2会議室にて", target: "staff" },
+            { title: "不審者情報あり。複数人で行動してください", target: "urgent" },
+            { title: "3限目の視聴覚室は使用不可", target: "student" },
+            { title: "体育館の照明工事完了しました", target: "staff" },
+            { title: "美化コンクールは来週に延期です", target: "event" },
+            { title: "月曜日は短縮授業（45分）です", target: "student" }
+        ];
+
+        let currentPage = 0;
+        const ITEMS_PER_PAGE = 5;
+        let editingIndex = null;
+
+        // --- 画面遷移 ---
+        function showScreen(screenId) {
+            // 全画面非表示
+            ['screen-entrance', 'screen-dashboard', 'screen-edit', 'screen-smartphone'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            // ターゲット表示
+            document.getElementById('screen-' + screenId).classList.remove('hidden');
+
+            // 画面ごとの初期化
+            if (screenId === 'dashboard') {
+                startClock();
+                generateQRCode();
+                updateTopEventDisplay(); 
+                updateBottomUrgentTicker();
+                renderNotices();
+                // ページ送りタイマー
+                if(window.pageInterval) clearInterval(window.pageInterval);
+                window.pageInterval = setInterval(nextPage, 10000);
+            } else if (screenId === 'edit') {
+                renderEditList();
+            } else if (screenId === 'smartphone') {
+                renderPhoneList();
+            }
+        }
+
+        // --- Dashboard: 上部行事 ---
+        function updateTopEventDisplay() {
+            const container = document.getElementById('top-event-container');
+            const eventNotices = notices.filter(n => n.target === 'event').map(n => n.title);
+            let fullText = eventNotices.join("　　/　　");
+            if (!fullText) fullText = "（行事予定なし）";
+            container.textContent = fullText;
+        }
+
+        // --- Dashboard: 下部臨時 ---
+        function updateBottomUrgentTicker() {
+            const container = document.getElementById('urgent-text-container');
+            const footer = document.getElementById('urgent-footer');
+            const urgentNotices = notices.filter(n => n.target === 'urgent').map(n => n.title);
+            
+            if (urgentNotices.length > 0) {
+                container.textContent = urgentNotices.join("　　　　");
+            } else {
+                container.textContent = "現在、緊急の連絡はありません。";
+            }
+        }
+
+        // --- Dashboard: メインリスト ---
+        function getFilteredNotices() {
+            // ダッシュボードには「行事」「臨時」を表示しない
+            return notices.filter(n => n.target !== 'event' && n.target !== 'urgent');
+        }
+
+        function nextPage() {
+            const list = getFilteredNotices();
+            const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+            if (totalPages === 0) return;
+            currentPage = (currentPage + 1) % totalPages;
+            renderNotices();
+        }
+
+        function renderNotices() {
+            const container = document.getElementById('display-notices');
+            container.innerHTML = '';
+            
+            const list = getFilteredNotices();
+            // ソート: 共通 -> 職員 -> 生徒
+            list.sort((a, b) => {
+                const priority = { 'common': 1, 'staff': 2, 'student': 3 };
+                return (priority[a.target] || 99) - (priority[b.target] || 99);
+            });
+
+            const start = currentPage * ITEMS_PER_PAGE;
+            const end = start + ITEMS_PER_PAGE;
+            const displayList = list.slice(start, end);
+
+            if (displayList.length === 0) {
+                container.innerHTML = '<div class="text-3xl text-gray-400 p-8">現在、表示する連絡はありません。</div>';
+                return;
+            }
+
+            displayList.forEach((n, index) => {
+                const card = document.createElement('div');
+                card.className = `notice-card w-full anim-cascade bg-white`;
+                // アニメーション遅延
+                card.style.animationDelay = `${index * 0.1}s`;
+
+                let iconHtml = '';
+                if (n.target === 'common') iconHtml = `<div class="icon-circle bg-purple-500">共</div>`;
+                else if (n.target === 'staff') iconHtml = `<div class="icon-circle bg-orange-500">職</div>`;
+                else iconHtml = `<div class="icon-circle bg-blue-500">生</div>`;
+                
+                card.innerHTML = `${iconHtml}<h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3>`;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Smartphone: 閲覧リスト ---
+        function renderPhoneList() {
+            const container = document.getElementById('phone-list-container');
+            container.innerHTML = '';
+
+            // ソート: 行事(1)->臨時(2)->共通(3)->職員(4)->生徒(5)
+            const sortedList = [...notices].sort((a, b) => {
+                const priority = { 'event': 1, 'urgent': 2, 'common': 3, 'staff': 4, 'student': 5 };
+                return (priority[a.target] || 99) - (priority[b.target] || 99);
+            });
+
+            sortedList.forEach((n) => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between";
+
+                let badgeClass = '', badgeText = '';
+                if (n.target === 'urgent') { badgeClass = 'bg-red-100 text-red-600'; badgeText = '臨時'; }
+                else if (n.target === 'event') { badgeClass = 'bg-green-100 text-green-600'; badgeText = '行事'; }
+                else if (n.target === 'common') { badgeClass = 'bg-purple-100 text-purple-600'; badgeText = '共通'; }
+                else if (n.target === 'staff') { badgeClass = 'bg-orange-100 text-orange-600'; badgeText = '職員'; }
+                else { badgeClass = 'bg-blue-100 text-blue-600'; badgeText = '生徒'; }
+
+                item.innerHTML = `
+                    <div class="flex items-center overflow-hidden w-full">
+                        <span class="${badgeClass} text-xs font-bold px-2 py-1 rounded mr-3 whitespace-nowrap min-w-[3rem] text-center flex-shrink-0">${badgeText}</span>
+                        <span class="text-sm font-bold text-gray-700 truncate flex-1">${n.title}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // --- Edit: 管理リスト ---
+        function renderEditList() {
+            const container = document.getElementById('edit-list-container');
+            container.innerHTML = '';
+
+            notices.forEach((n) => {
+                const originalIndex = notices.indexOf(n);
+                const item = document.createElement('div');
+                item.className = "edit-list-item bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer";
+                item.onclick = () => openModal('edit', originalIndex);
+
+                let badgeClass = '', badgeText = '';
+                if (n.target === 'urgent') { badgeClass = 'bg-red-100 text-red-600'; badgeText = '臨時'; }
+                else if (n.target === 'event') { badgeClass = 'bg-green-100 text-green-600'; badgeText = '行事'; }
+                else if (n.target === 'common') { badgeClass = 'bg-purple-100 text-purple-600'; badgeText = '共通'; }
+                else if (n.target === 'staff') { badgeClass = 'bg-orange-100 text-orange-600'; badgeText = '職員'; }
+                else { badgeClass = 'bg-blue-100 text-blue-600'; badgeText = '生徒'; }
+
+                item.innerHTML = `
+                    <div class="flex items-center overflow-hidden">
+                        <span class="${badgeClass} text-xs font-bold px-2 py-1 rounded mr-3 whitespace-nowrap min-w-[3rem] text-center">${badgeText}</span>
+                        <span class="text-sm font-bold text-gray-700 truncate">${n.title}</span>
+                    </div>
+                    <span class="text-gray-300 text-lg ml-2">&rsaquo;</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // --- Modal Logic ---
+        function openModal(mode, index = null) {
+            const modal = document.getElementById('edit-modal');
+            const titleEl = document.getElementById('modal-title');
+            const inputEl = document.getElementById('modal-input-title');
+            const btnDelete = document.getElementById('btn-delete');
+            const btnSave = document.getElementById('btn-save');
+            modal.classList.remove('hidden');
+
+            if (mode === 'create') {
+                editingIndex = null;
+                titleEl.textContent = "新規作成";
+                inputEl.value = "";
+                btnSave.textContent = "追加する";
+                btnDelete.classList.add('hidden');
+                document.querySelector('input[name="modalType"][value="student"]').checked = true;
+            } else {
+                editingIndex = index;
+                titleEl.textContent = "内容の編集";
+                inputEl.value = notices[index].title;
+                btnSave.textContent = "更新する";
+                btnDelete.classList.remove('hidden');
+                document.querySelector(`input[name="modalType"][value="${notices[index].target}"]`).checked = true;
+            }
+        }
+
+        function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+        function saveData() {
+            const title = document.getElementById('modal-input-title').value;
+            if (!title) return alert("内容を入力してください");
+            let selectedType = 'student';
+            for(let el of document.getElementsByName('modalType')) { if(el.checked) selectedType = el.value; }
+            
+            if (editingIndex === null) notices.unshift({ title, target: selectedType });
+            else notices[editingIndex] = { title, target: selectedType };
+            
+            closeModal(); renderEditList();
+        }
+
+        function deleteData() {
+            if (editingIndex === null || !confirm("本当に削除しますか？")) return;
+            notices.splice(editingIndex, 1); closeModal(); renderEditList();
+        }
+
+        // --- Utils ---
+        function generateQRCode() {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, {
+                text: window.location.href,
+                width: 64, height: 64, /* 少し小さく */
+                colorDark : "#333333", colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
+        }
+
+        function startClock() {
+            renderDashboard();
+            if(window.clockInterval) clearInterval(window.clockInterval);
+            window.clockInterval = setInterval(updateTime, 1000);
+            updateTime();
+        }
+
+        function renderDashboard() {
+            const now = new Date();
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('current-date').textContent = 
+                `${now.getMonth()+1}月${now.getDate()}日(${days[now.getDay()]})`;
+        }
+
+        function formatTimeShort(str) {
+            if (!str) return "";
+            const [h, m] = str.split(':').map(Number);
+            return `${h}:${String(m).padStart(2, '0')}`;
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let periodName = "", startStr = "", endStr = "", isClass = false, found = false;
+            for (let i = 0; i < schedule.length; i++) {
+                const s = schedule[i], startM = parseTime(s.start), endM = parseTime(s.end);
+                if (currentMinutes >= startM && currentMinutes < endM) {
+                    periodName = s.name; startStr = s.start; endStr = s.end; isClass = true; found = true; break;
+                } else if (i < schedule.length - 1) {
+                    const nextStartM = parseTime(schedule[i+1].start);
+                    if (currentMinutes >= endM && currentMinutes < nextStartM) {
+                        periodName = "休み時間"; startStr = s.end; endStr = schedule[i+1].start; isClass = false; found = true; break;
+                    }
+                }
+            }
+            // デモ用強制表示（時間外）
+            if (!found) { periodName = "1限"; startStr = "08:50"; endStr = "09:40"; isClass = true; }
+            
+            const cardEl = document.getElementById('schedule-card');
+            const nameEl = document.getElementById('current-period-name');
+            const timeEl = document.getElementById('current-period-time');
+            const timeBoxEl = document.getElementById('time-box');
+            const prefixEl = document.getElementById('now-prefix');
+
+            nameEl.textContent = periodName;
+            timeEl.textContent = `${formatTimeShort(startStr)}~${formatTimeShort(endStr)}`;
+
+            if (isClass) {
+                cardEl.className = "glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-blue-600 shadow-xl border-none";
+                nameEl.className = "text-period-name text-white"; 
+                timeBoxEl.className = "bg-blue-500 rounded-xl py-2 px-6 inline-block"; 
+                timeEl.className = "text-period-time tabular-nums leading-none text-white"; 
+                prefixEl.className = "text-period-prefix text-blue-200";
+            } else {
+                cardEl.className = "glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-gray-200 border-none";
+                nameEl.className = "text-period-name text-gray-700"; 
+                timeBoxEl.className = "bg-white rounded-xl py-2 px-6 inline-block shadow-sm"; 
+                timeEl.className = "text-period-time tabular-nums leading-none text-gray-800"; 
+                prefixEl.className = "text-period-prefix text-gray-400";
+            }
+        }
+        function parseTime(str) { const [h, m] = str.split(':').map(Number); return h * 60 + m; }
+    </script>
+</body>
+</html>
