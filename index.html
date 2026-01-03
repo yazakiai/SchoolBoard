@@ -15,6 +15,10 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
     <style>
         /* 全体に M PLUS Rounded 1c を適用 */
         body, button, input, textarea, div, span, p, h1, h2, h3, h4, h5, h6 {
@@ -44,7 +48,7 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         
-        /* Notice Card */
+        /* Notice Card (修正: opacity初期値を1に) */
         .notice-card {
             background: white;
             border-radius: 20px;
@@ -54,6 +58,7 @@
             align-items: center;
             height: 9rem; 
             margin-bottom: 1rem;
+            opacity: 1; /* 重要: デフォルトで見えるようにする */
         }
 
         /* Icon */
@@ -85,7 +90,7 @@
         }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-        /* Animation: Cascade */
+        /* Animation: Cascade (修正: 動きのみ定義) */
         @keyframes slideUpFade {
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -96,39 +101,60 @@
 
         .edit-list-item:active { background-color: #E5E7EB; }
         
-        /* ローディング表示用 */
+        /* Loading Overlay */
         .loading-overlay {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 100;
-            display: flex; justify-content: center; align-items: center; font-weight: bold; color: #666;
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 100;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-weight: bold; color: #666; transition: opacity 0.5s;
         }
     </style>
 </head>
 <body class="h-screen flex flex-col bg-[#F0F2F5]">
 
-    <div id="loading" class="loading-overlay">Connecting to Firebase...</div>
+    <div id="loading" class="loading-overlay">
+        <p class="text-3xl mb-4 text-blue-600">Connecting...</p>
+        <p class="text-sm text-gray-400">データを取得しています</p>
+    </div>
 
     <div id="screen-entrance" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#F0F2F5] space-y-8">
         <h1 class="text-5xl font-bold text-gray-700 mb-8">職員室ダッシュボード</h1>
-        <button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-blue-800">大画面表示</button>
-        <button onclick="showScreen('smartphone')" class="w-80 bg-white text-gray-700 border-4 border-gray-200 py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-100">スマホ表示</button>
-        <button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-900">データ入力</button>
+        
+        <button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-blue-800">
+            大画面表示
+        </button>
+        
+        <button onclick="showScreen('smartphone')" class="w-80 bg-white text-gray-700 border-4 border-gray-200 py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-100">
+            スマホ表示
+        </button>
+        
+        <button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition active:bg-gray-900">
+            データ入力
+        </button>
     </div>
 
     <div id="screen-dashboard" class="hidden h-full flex flex-col">
+        
         <div class="flex-1 flex flex-col p-6 pb-2 space-y-6 overflow-hidden">
+            
             <div class="flex items-center h-24 space-x-6">
                 <div class="glass-card px-10 h-full flex items-center justify-center flex-shrink-0 bg-white">
                     <p class="text-date text-gray-700" id="current-date">--月--日</p>
                 </div>
                 <div class="flex-1 h-full flex items-center overflow-hidden px-6">
-                    <div id="top-event-container" class="text-5xl text-gray-700 font-bold truncate w-full">読み込み中...</div>
+                    <div id="top-event-container" class="text-5xl text-gray-700 font-bold truncate w-full">
+                        （行事予定なし）
+                    </div>
                 </div>
             </div>
+
             <div class="flex flex-1 space-x-6 overflow-hidden pb-2">
                 <div class="w-[70%] flex flex-col h-full relative">
-                    <div id="display-notices" class="flex-1 flex flex-col justify-start overflow-hidden pt-2"></div>
+                    <div id="display-notices" class="flex-1 flex flex-col justify-start overflow-hidden pt-2">
+                        </div>
                 </div>
+
                 <div class="w-[30%] flex flex-col space-y-6">
+                    
                     <div id="schedule-card" class="glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-blue-600 shadow-xl border-none">
                         <div id="schedule-container" class="w-full">
                             <div class="mb-2 flex items-baseline justify-center">
@@ -140,19 +166,22 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div class="glass-card flex-1 p-6 flex flex-col justify-center items-center bg-white relative border-t-8 border-gray-200">
                         <p class="text-2xl text-gray-300 font-bold text-center">Free Space<br>(Topics)</p>
                     </div>
                 </div>
             </div>
         </div>
+
         <div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center relative z-20 shadow-sm px-4">
             <div class="pl-4 pr-6 bg-white h-full flex items-center z-30 flex-shrink-0">
                 <span class="text-red-600 text-3xl font-bold">臨時</span>
             </div>
             <div class="flex-1 overflow-hidden h-full flex items-center mr-4">
                 <div class="ticker-wrap">
-                    <div id="urgent-text-container" class="ticker-content text-4xl text-red-600 font-bold"></div>
+                    <div id="urgent-text-container" class="ticker-content text-4xl text-red-600 font-bold">
+                        </div>
                 </div>
             </div>
             <div class="h-full flex items-center justify-center flex-shrink-0 py-1 bg-white pl-4 border-l border-gray-100">
@@ -204,20 +233,16 @@
                         <input type="text" id="modal-input-title" class="w-full p-3 border-2 border-gray-200 rounded-xl outline-none focus:border-blue-500 text-lg" placeholder="内容を入力...">
                     </div>
                     <div class="pt-2 flex flex-col space-y-3">
-                        <button onclick="window.saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
-                        <button onclick="window.deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold text-lg">このデータを削除</button>
+                        <button onclick="saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
+                        <button onclick="deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold text-lg">このデータを削除</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        // Provided Config
+    <script>
+        // --- 1. Firebase Configuration & Init ---
         const firebaseConfig = {
             apiKey: "AIzaSyAb5GbSvT8YCOJt6LYGWxLQvQLspFU3nWM",
             authDomain: "school-map-quest.firebaseapp.com",
@@ -229,149 +254,113 @@
             measurementId: "G-1E4P6SZ7ZF"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-        const noticesRef = ref(db, 'notices');
-
-        // Local state
-        let notices = [];
+        let notices = []; // Local data store
         let currentEditId = null;
+        let noticesRef;   // DB reference
 
-        // --- 1. Authentication (Anonymous) ---
-        // セキュリティルールで書き込み制限をかけても動くように、匿名ログインを実行
-        signInAnonymously(auth).then(() => {
-            console.log("Signed in anonymously");
-            document.getElementById('loading').classList.add('hidden');
-        }).catch((error) => {
-            console.error("Auth Error:", error);
-            alert("接続エラーが発生しました");
-        });
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+            const auth = firebase.auth();
+            noticesRef = db.ref('notices');
 
-        // --- 2. Data Synchronization (Realtime) ---
-        onValue(noticesRef, (snapshot) => {
-            const data = snapshot.val();
-            notices = [];
-            if (data) {
-                // Convert object to array with ID
-                Object.keys(data).forEach(key => {
-                    notices.push({ id: key, ...data[key] });
-                });
-                // Sort by timestamp desc (newest first) as default
-                notices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-            }
-            
-            // Refresh current view
-            if (!document.getElementById('screen-dashboard').classList.contains('hidden')) {
-                updateDashboard();
-            }
-            if (!document.getElementById('screen-edit').classList.contains('hidden')) {
-                window.renderEditList();
-            }
-            if (!document.getElementById('screen-smartphone').classList.contains('hidden')) {
-                window.renderPhoneList();
-            }
-        });
+            // 1. Auth
+            auth.signInAnonymously().then(() => {
+                console.log("Logged in");
+                document.getElementById('loading').classList.add('hidden'); // Hide Loading
+            }).catch(e => {
+                console.error(e);
+                alert("認証エラー: Firebaseコンソールで匿名ログインを有効にしてください。");
+            });
 
-        // --- Global Functions (Exposed to window for HTML onclick) ---
-        
-        window.showScreen = function(screenId) {
+            // 2. Realtime Listener
+            noticesRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                notices = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        notices.push({ id: key, ...data[key] });
+                    });
+                    // Default Sort: Newest first
+                    notices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                }
+                
+                console.log("Data Received:", notices.length); // Debug Log
+
+                // Update current view immediately
+                if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
+                if (!document.getElementById('screen-edit').classList.contains('hidden')) renderEditList();
+                if (!document.getElementById('screen-smartphone').classList.contains('hidden')) renderPhoneList();
+            });
+
+        } catch (e) {
+            console.error("Firebase Init Error", e);
+            alert("初期化エラー: " + e.message);
+        }
+
+        // --- 2. Global Functions ---
+
+        function showScreen(screenId) {
             ['screen-entrance', 'screen-dashboard', 'screen-edit', 'screen-smartphone'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById('screen-' + screenId).classList.remove('hidden');
 
             if (screenId === 'dashboard') {
-                window.startClock();
-                window.generateQRCode();
+                startClock();
+                generateQRCode();
                 updateDashboard();
                 if(window.pageInterval) clearInterval(window.pageInterval);
-                window.pageInterval = setInterval(window.nextPage, 10000);
+                window.pageInterval = setInterval(nextPage, 10000);
             } else if (screenId === 'edit') {
-                window.renderEditList();
+                renderEditList();
             } else if (screenId === 'smartphone') {
-                window.renderPhoneList();
+                renderPhoneList();
             }
-        };
+        }
 
-        // --- Data Operations (Write to Firebase) ---
-        window.saveData = function() {
-            const title = document.getElementById('modal-input-title').value;
-            if (!title) return alert("内容を入力してください");
-            let selectedType = 'student';
-            for(let el of document.getElementsByName('modalType')) { if(el.checked) selectedType = el.value; }
-
-            const payload = {
-                title: title,
-                target: selectedType,
-                timestamp: Date.now() // For sorting
-            };
-
-            if (currentEditId === null) {
-                // Create
-                push(noticesRef, payload);
-            } else {
-                // Update
-                update(ref(db, 'notices/' + currentEditId), { title, target: selectedType });
-            }
-            window.closeModal();
-        };
-
-        window.deleteData = function() {
-            if (currentEditId === null || !confirm("本当に削除しますか？")) return;
-            remove(ref(db, 'notices/' + currentEditId));
-            window.closeModal();
-        };
-
-        // --- UI Logic: Dashboard ---
+        // --- 3. Dashboard Logic ---
         let currentPage = 0;
         const ITEMS_PER_PAGE = 5;
 
         function updateDashboard() {
+            // Update all 3 sections
             updateTopEventDisplay();
             updateBottomUrgentTicker();
-            window.renderNotices();
+            renderNotices();
         }
 
         function updateTopEventDisplay() {
             const container = document.getElementById('top-event-container');
-            const eventNotices = notices.filter(n => n.target === 'event').map(n => n.title);
-            let fullText = eventNotices.join("　　/　　");
-            if (!fullText) fullText = "（行事予定なし）";
-            container.textContent = fullText;
+            const list = notices.filter(n => n.target === 'event').map(n => n.title);
+            container.textContent = list.length ? list.join("　　/　　") : "（行事予定なし）";
         }
 
         function updateBottomUrgentTicker() {
             const container = document.getElementById('urgent-text-container');
-            const footer = document.getElementById('urgent-footer');
-            const urgentNotices = notices.filter(n => n.target === 'urgent').map(n => n.title);
-            if (urgentNotices.length > 0) {
-                container.textContent = urgentNotices.join("　　　　");
-            } else {
-                container.textContent = "現在、緊急の連絡はありません。";
-            }
+            const list = notices.filter(n => n.target === 'urgent').map(n => n.title);
+            container.textContent = list.length ? list.join("　　　　") : "現在、緊急の連絡はありません。";
         }
 
         function getFilteredNotices() {
-            // Dashboard excludes 'event' and 'urgent' from main list
+            // Main list excludes Event and Urgent
             return notices.filter(n => n.target !== 'event' && n.target !== 'urgent');
         }
 
-        window.nextPage = function() {
+        function nextPage() {
             const list = getFilteredNotices();
             const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
             if (totalPages === 0) return;
             currentPage = (currentPage + 1) % totalPages;
-            window.renderNotices();
-        };
+            renderNotices();
+        }
 
-        window.renderNotices = function() {
+        function renderNotices() {
             const container = document.getElementById('display-notices');
             container.innerHTML = '';
             
             const list = getFilteredNotices();
-            // Sort: Common->Staff->Student
+            // Sort: Common -> Staff -> Student
             list.sort((a, b) => {
                 const priority = { 'common': 1, 'staff': 2, 'student': 3 };
                 return (priority[a.target] || 99) - (priority[b.target] || 99);
@@ -381,10 +370,14 @@
             const end = start + ITEMS_PER_PAGE;
             const displayList = list.slice(start, end);
 
+            if (displayList.length === 0) {
+                container.innerHTML = "<div class='text-gray-400 text-3xl p-8'>表示する連絡はありません</div>";
+                return;
+            }
+
             displayList.forEach((n, index) => {
                 const card = document.createElement('div');
                 card.className = `notice-card w-full bg-white anim-cascade`;
-                // Add opacity 1 via animation, but ensure basic style is visible
                 card.style.animationDelay = `${index * 0.1}s`;
 
                 let iconHtml = '';
@@ -395,27 +388,28 @@
                 card.innerHTML = `${iconHtml}<h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3>`;
                 container.appendChild(card);
             });
-        };
+        }
 
-        // --- UI Logic: Smartphone (View Only) ---
-        window.renderPhoneList = function() {
+        // --- 4. Smartphone Logic (View Only) ---
+        function renderPhoneList() {
             const container = document.getElementById('phone-list-container');
             container.innerHTML = '';
-
+            
             // Sort: Event(1)->Urgent(2)->Common(3)->Staff(4)->Student(5)
-            const sortedList = [...notices].sort((a, b) => {
+            const sorted = [...notices].sort((a, b) => {
                 const priority = { 'event': 1, 'urgent': 2, 'common': 3, 'staff': 4, 'student': 5 };
                 return (priority[a.target] || 99) - (priority[b.target] || 99);
             });
 
-            if(sortedList.length === 0) {
+            if (sorted.length === 0) {
                 container.innerHTML = "<div class='text-center text-gray-400 mt-10'>データがありません</div>";
                 return;
             }
 
-            sortedList.forEach((n) => {
+            sorted.forEach(n => {
                 const item = document.createElement('div');
                 item.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between";
+                
                 let badgeClass = '', badgeText = '';
                 if (n.target === 'urgent') { badgeClass = 'bg-red-100 text-red-600'; badgeText = '臨時'; }
                 else if (n.target === 'event') { badgeClass = 'bg-green-100 text-green-600'; badgeText = '行事'; }
@@ -431,18 +425,22 @@
                 `;
                 container.appendChild(item);
             });
-        };
+        }
 
-        // --- UI Logic: Edit (Admin) ---
-        window.renderEditList = function() {
+        // --- 5. Edit Logic (Admin) ---
+        function renderEditList() {
             const container = document.getElementById('edit-list-container');
             container.innerHTML = '';
+            
+            if (notices.length === 0) {
+                container.innerHTML = "<div class='text-center text-gray-400 mt-10'>データがありません</div>";
+                return;
+            }
 
-            // Show all, no specific sort (or timestamp desc)
-            notices.forEach((n) => {
+            notices.forEach(n => {
                 const item = document.createElement('div');
                 item.className = "edit-list-item bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer";
-                item.onclick = () => window.openModal('edit', n.id); // Use ID
+                item.onclick = () => openModal('edit', n.id);
 
                 let badgeClass = '', badgeText = '';
                 if (n.target === 'urgent') { badgeClass = 'bg-red-100 text-red-600'; badgeText = '臨時'; }
@@ -460,9 +458,9 @@
                 `;
                 container.appendChild(item);
             });
-        };
+        }
 
-        window.openModal = function(mode, id = null) {
+        function openModal(mode, id = null) {
             const modal = document.getElementById('edit-modal');
             const titleEl = document.getElementById('modal-title');
             const inputEl = document.getElementById('modal-input-title');
@@ -486,12 +484,38 @@
                 btnDelete.classList.remove('hidden');
                 if(data) document.querySelector(`input[name="modalType"][value="${data.target}"]`).checked = true;
             }
-        };
+        }
 
-        window.closeModal = function() { document.getElementById('edit-modal').classList.add('hidden'); };
+        function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
 
-        // --- Common Utils (Clock, QR) ---
-        window.generateQRCode = function() {
+        function saveData() {
+            const title = document.getElementById('modal-input-title').value;
+            if (!title) return alert("内容を入力してください");
+            let selectedType = 'student';
+            for(let el of document.getElementsByName('modalType')) { if(el.checked) selectedType = el.value; }
+
+            const payload = {
+                title: title,
+                target: selectedType,
+                timestamp: Date.now()
+            };
+
+            if (currentEditId === null) {
+                noticesRef.push(payload);
+            } else {
+                firebase.database().ref('notices/' + currentEditId).update({ title: title, target: selectedType });
+            }
+            closeModal();
+        }
+
+        function deleteData() {
+            if (currentEditId === null || !confirm("本当に削除しますか？")) return;
+            firebase.database().ref('notices/' + currentEditId).remove();
+            closeModal();
+        }
+
+        // --- 6. Utilities ---
+        function generateQRCode() {
             const qrContainer = document.getElementById('qrcode');
             qrContainer.innerHTML = "";
             new QRCode(qrContainer, {
@@ -500,16 +524,22 @@
                 colorDark : "#333333", colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.L
             });
-        };
+        }
 
-        window.startClock = function() {
+        function startClock() {
             renderDashboard();
             if(window.clockInterval) clearInterval(window.clockInterval);
             window.clockInterval = setInterval(updateTime, 1000);
             updateTime();
-        };
+        }
 
-        // Schedule Data (Static)
+        function renderDashboard() {
+            const now = new Date();
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('current-date').textContent = 
+                `${now.getMonth()+1}月${now.getDate()}日(${days[now.getDay()]})`;
+        }
+
         const schedule = [
             { name: "SHR", start: "08:35", end: "08:45" },
             { name: "1限", start: "08:50", end: "09:40" },
@@ -526,7 +556,6 @@
             const [h, m] = str.split(':').map(Number);
             return `${h}:${String(m).padStart(2, '0')}`;
         }
-
         function parseTime(str) { const [h, m] = str.split(':').map(Number); return h * 60 + m; }
 
         function updateTime() {
@@ -544,29 +573,18 @@
                     }
                 }
             }
-            if (!found) { periodName = "1限"; startStr = "08:50"; endStr = "09:40"; isClass = true; } // Demo fallback
+            if (!found) { periodName = "1限"; startStr = "08:50"; endStr = "09:40"; isClass = true; } // Demo
             
-            const cardEl = document.getElementById('schedule-card');
-            const nameEl = document.getElementById('current-period-name');
-            const timeEl = document.getElementById('current-period-time');
-            const timeBoxEl = document.getElementById('time-box');
-            const prefixEl = document.getElementById('now-prefix');
-
+            const cardEl = document.getElementById('schedule-card'), nameEl = document.getElementById('current-period-name'), timeEl = document.getElementById('current-period-time'), timeBoxEl = document.getElementById('time-box'), prefixEl = document.getElementById('now-prefix');
             nameEl.textContent = periodName;
             timeEl.textContent = `${formatTimeShort(startStr)}~${formatTimeShort(endStr)}`;
-
+            
             if (isClass) {
                 cardEl.className = "glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-blue-600 shadow-xl border-none";
-                nameEl.className = "text-period-name text-white"; 
-                timeBoxEl.className = "bg-blue-500 rounded-xl py-2 px-6 inline-block"; 
-                timeEl.className = "text-period-time tabular-nums leading-none text-white"; 
-                prefixEl.className = "text-period-prefix text-blue-200";
+                nameEl.className = "text-period-name text-white"; timeBoxEl.className = "bg-blue-500 rounded-xl py-2 px-6 inline-block"; timeEl.className = "text-period-time tabular-nums leading-none text-white"; prefixEl.className = "text-period-prefix text-blue-200";
             } else {
                 cardEl.className = "glass-card p-6 flex flex-col justify-center items-center text-center h-[45%] transition-colors duration-500 bg-gray-200 border-none";
-                nameEl.className = "text-period-name text-gray-700"; 
-                timeBoxEl.className = "bg-white rounded-xl py-2 px-6 inline-block shadow-sm"; 
-                timeEl.className = "text-period-time tabular-nums leading-none text-gray-800"; 
-                prefixEl.className = "text-period-prefix text-gray-400";
+                nameEl.className = "text-period-name text-gray-700"; timeBoxEl.className = "bg-white rounded-xl py-2 px-6 inline-block shadow-sm"; timeEl.className = "text-period-time tabular-nums leading-none text-gray-800"; prefixEl.className = "text-period-prefix text-gray-400";
             }
         }
     </script>
