@@ -42,7 +42,7 @@
             padding: 0 2rem;
             display: flex;
             align-items: center;
-            height: 7.8rem; 
+            height: 7.0rem; 
             margin-bottom: 0.8rem;
         }
 
@@ -73,8 +73,8 @@
             justify-content: center;
             padding: 0.4rem 0.8rem;
             border-radius: 0.75rem;
-            border: 3px solid #7dd3fc;
-            background-color: #f0f9ff;
+            border: 3px solid #0369a1;
+            background-color: #e9f5fd;
             color: #0369a1;
             font-weight: 800;
             font-size: 1.3rem;
@@ -488,7 +488,7 @@
         }
         function generateQRCode() {
             const container = document.getElementById('qrcode'); container.innerHTML = "";
-            new QRCode(container, { text: window.location.href, width: 64, height: 64 });
+            new QRCode(container, { text:"https://kjs-hs.note.jp", width: 64, height: 64 });
         }
         function updateDate() {
             const el = document.getElementById('current-date'); if(el) el.textContent = getDisplayDate(new Date());
