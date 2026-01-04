@@ -52,7 +52,6 @@
             font-size: 2rem; font-weight: 800; color: white; flex-shrink: 0; margin-right: 1.5rem;
         }
 
-        /* ニュースティッカー設定 */
         .ticker-wrap { width: 100%; overflow: hidden; white-space: nowrap; display: flex; align-items: center; }
         .ticker-content { display: inline-block; padding-left: 100%; animation: ticker 40s linear infinite; }
         @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
@@ -221,7 +220,8 @@
                 const data = snapshot.val();
                 notices = [];
                 if (data) Object.keys(data).forEach(key => notices.push({ id: key, ...data[key] }));
-                notices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                // 新しいデータを下にする（昇順）
+                notices.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 updateAllViews();
             });
 
@@ -243,7 +243,6 @@
 
         function updateAllViews() {
             if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
-            // 管理画面が表示されていればリストを更新
             if (!document.getElementById('screen-edit').classList.contains('hidden')) { 
                 renderEditList(); 
                 renderScheduleEditList(); 
@@ -261,7 +260,6 @@
                 if(window.pageInterval) clearInterval(window.pageInterval);
                 window.pageInterval = setInterval(nextPage, 10000);
             } else if (screenId === 'edit') {
-                // 画面を切り替えた瞬間に最新データを表示
                 renderEditList();
                 renderScheduleEditList();
                 switchEditTab('notice');
@@ -299,15 +297,13 @@
             const list = notices.filter(n => n.target === 'urgent').map(n => n.title);
 
             if (list.length > 0) {
-                // データがある場合：赤いラベル、赤文字、スクロール
                 badge.classList.remove('hidden');
                 container.textContent = list.join("　　　　");
                 container.className = "ticker-content text-4xl text-red-600 font-bold";
             } else {
-                // データがない場合：ラベル非表示、黒文字、左詰め（アニメーション解除）
                 badge.classList.add('hidden');
                 container.textContent = "久慈翔北高校　生徒用デジタル掲示板";
-                container.className = "text-4xl text-gray-800 font-bold px-4"; // ticker-contentクラスを外して静止
+                container.className = "text-4xl text-black font-bold px-4 text-left"; 
             }
         }
 
@@ -339,8 +335,8 @@
             }
             displayList.forEach((n, index) => {
                 const card = document.createElement('div');
-                card.className = `notice-card w-full bg-white anim-cascade`;
-                card.style.animationDelay = `${index * 0.1}s`;
+                card.className = `notice-card w-full bg-white ${isMultiPage ? 'anim-cascade' : ''}`;
+                if (isMultiPage) card.style.animationDelay = `${index * 0.1}s`;
                 card.innerHTML = `<div class="icon-circle bg-blue-500">生</div><h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3>`;
                 container.appendChild(card);
             });
@@ -392,8 +388,8 @@
             const info = getSchedulePagesInfo();
             
             let displayList = [], label = "今日", colorClass = "";
+            const totalPages = info.todayPages + info.tomorrowPages;
             
-            // 明後日は表示しない（今日と明日のみサイクル）
             if (currentSchedulePage < info.todayPages) {
                 displayList = info.todayGroups.slice(currentSchedulePage * SCHEDULE_ITEMS_PER_PAGE, (currentSchedulePage + 1) * SCHEDULE_ITEMS_PER_PAGE);
                 label = "今日"; colorClass = "";
@@ -410,12 +406,13 @@
 
             displayList.forEach((group, index) => {
                 const card = document.createElement('div');
-                card.className = `change-card ${colorClass} anim-cascade`;
-                card.style.animationDelay = `${index * 0.1}s`;
+                card.className = `change-card ${colorClass} ${totalPages > 1 ? 'anim-cascade' : ''}`;
+                if (totalPages > 1) card.style.animationDelay = `${index * 0.1}s`;
                 let badge = label === "今日" ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600";
                 let rowsHtml = '';
                 group.items.forEach(item => {
-                    rowsHtml += `<div class="flex items-center mb-1"><span class="text-lg bg-gray-200 px-3 py-0.5 rounded-lg text-gray-600 mr-3 font-bold w-16 text-center">${item.period}限</span><span class="text-2xl font-bold text-gray-700">${item.subject}</span></div>`;
+                    // グレーの囲み背景部分のサイズ調整（w-24）
+                    rowsHtml += `<div class="flex items-center mb-1"><span class="text-lg bg-gray-200 px-3 py-0.5 rounded-lg text-gray-600 mr-3 font-bold w-24 text-center">${item.period}校時</span><span class="text-2xl font-bold text-gray-700">${item.subject}</span></div>`;
                 });
                 card.innerHTML = `<div class="flex flex-col items-center justify-center w-24 flex-shrink-0"><span class="${badge} text-xs px-2 py-0.5 rounded font-bold mb-1">${label}</span><div class="font-bold text-gray-700 text-3xl leading-none">${group.class}</div></div><div class="flex-1 px-2 flex flex-col justify-center">${rowsHtml}</div>`;
                 container.appendChild(card);
@@ -461,6 +458,7 @@
                 document.getElementById('modal-title').textContent = "新規作成";
                 document.getElementById('modal-input-title').value = "";
                 deleteBtn.classList.add('hidden');
+                document.querySelector('input[name="modalType"][value="student"]').checked = true;
             } else {
                 const data = notices.find(n => n.id === id);
                 document.getElementById('modal-title').textContent = "修正";
@@ -474,7 +472,7 @@
             const title = document.getElementById('modal-input-title').value;
             if(!title) return alert("内容を入力してください");
             const type = document.querySelector('input[name="modalType"]:checked').value;
-            const payload = { title, target: type, timestamp: Date.now() };
+            const payload = { title, target: type, timestamp: currentEditId ? notices.find(n=>n.id===currentEditId).timestamp : Date.now() };
             if (currentEditId) noticesRef.child(currentEditId).update(payload); else noticesRef.push(payload);
             closeModal();
         }
@@ -493,7 +491,7 @@
                 const item = document.createElement('div');
                 item.className = "bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center cursor-pointer active:bg-gray-50";
                 item.onclick = () => { if(confirm("この時間割変更を削除しますか？")) scheduleRef.child(s.id).remove(); };
-                item.innerHTML = `<div><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded mr-2">${s.targetDate}</span><span class="font-bold text-blue-600 mr-2">${s.class}</span><span class="font-bold text-gray-700">${s.period}限 ${s.subject}</span></div><span class="text-red-400 font-bold">削除</span>`;
+                item.innerHTML = `<div class="flex items-center"><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded mr-3">${s.targetDate}</span><span class="font-bold text-blue-600 inline-block w-14">${s.class}</span><span class="font-bold text-gray-700">${s.period}校時 ${s.subject}</span></div><span class="text-red-400 font-bold ml-4">削除</span>`;
                 container.appendChild(item);
             });
         }
