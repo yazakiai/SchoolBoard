@@ -1,13 +1,13 @@
 {
   "name": "職員室ダッシュボード",
-  "short_name": "職員室DB",
+  "short_name": "生徒用DB",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F8F9FA",
   "theme_color": "#007BFF",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/007BFF/ffffff?text=Icon",
+      "src": "https://placehold.co/192x192/007BFF/ffffff?text=%E5%A4%89%E6%9B%B4",
       "sizes": "192x192",
       "type": "image/png"
     }
