@@ -220,7 +220,7 @@
                 const data = snapshot.val();
                 notices = [];
                 if (data) Object.keys(data).forEach(key => notices.push({ id: key, ...data[key] }));
-                // 新しいデータを下にする（昇順）
+                // 新しく追加したデータほど下にする（昇順）
                 notices.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                 updateAllViews();
             });
@@ -312,7 +312,7 @@
             const totalNoticePages = Math.ceil(noticeList.length / ITEMS_PER_PAGE);
             if (totalNoticePages > 0) currentPage = (currentPage + 1) % totalNoticePages;
             
-            // 明後日は計算に入れない（今日と明日のみ）
+            // 明後日は表示しない（今日と明日のみ）
             const info = getSchedulePagesInfo();
             const totalSchedulePages = info.todayPages + info.tomorrowPages;
             if (totalSchedulePages > 0) currentSchedulePage = (currentSchedulePage + 1) % totalSchedulePages;
@@ -440,6 +440,7 @@
                 container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>';
                 return;
             }
+            // 新しいデータが下に来るように並び替えた配列を表示
             notices.forEach(n => {
                 const item = document.createElement('div');
                 item.className = "bg-white p-4 rounded-xl shadow-sm border flex items-center justify-between cursor-pointer active:bg-gray-50";
@@ -487,7 +488,8 @@
                 container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>';
                 return;
             }
-            filtered.sort((a,b)=>a.targetDate.localeCompare(b.targetDate) || a.class.localeCompare(b.class)).forEach(s => {
+            // 管理画面のリストも新しい順（タイムスタンプ昇順）に並び替え
+            filtered.sort((a,b)=> (a.timestamp || 0) - (b.timestamp || 0)).forEach(s => {
                 const item = document.createElement('div');
                 item.className = "bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center cursor-pointer active:bg-gray-50";
                 item.onclick = () => { if(confirm("この時間割変更を削除しますか？")) scheduleRef.child(s.id).remove(); };
