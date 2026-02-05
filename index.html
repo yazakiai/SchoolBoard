@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>生徒連絡用DB</title>
+<title>生徒連絡用DB - 入室制限対応版</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -144,17 +144,9 @@
             align-items: center;
             justify-content: center;
         }
-        .btn-control:hover {
-            transform: scale(1.05);
-            background-color: white;
-            border-color: #D1D5DB;
-        }
-        .btn-control:active {
-            transform: scale(0.95);
-        }
-        .icon-gray {
-            color: #6B7280;
-        }
+        .btn-control:hover { transform: scale(1.05); background-color: white; border-color: #D1D5DB; }
+        .btn-control:active { transform: scale(0.95); }
+        .icon-gray { color: #6B7280; }
 </style>
 </head>
 <body class="h-screen flex flex-col bg-[#F0F2F5]">
@@ -170,121 +162,161 @@
 </div>
 
 <div id="screen-dashboard" class="hidden h-full flex flex-col">
-<div class="control-panel">
-<button onclick="showScreen('edit')" class="btn-control" title="データ管理">
-<span class="text-2xl icon-gray">⚙️</span>
-</button>
-<button onclick="manualNextPage()" class="btn-control" title="次のページ">
-<svg class="w-8 h-8 icon-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path>
-</svg>
-</button>
-</div>
+    <div class="control-panel">
+        <button onclick="showScreen('edit')" class="btn-control" title="データ管理"><span class="text-2xl icon-gray">⚙️</span></button>
+        <button onclick="manualNextPage()" class="btn-control" title="次のページ">
+            <svg class="w-8 h-8 icon-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
 
-<div class="p-6 pb-2 space-y-6">
-<div class="flex items-center h-24 space-x-6">
-<div class="glass-card px-10 h-full flex items-center justify-center bg-white flex-shrink-0">
-<p class="text-date text-gray-700" id="current-date">--月--日</p>
-</div>
-<div class="flex-1 h-full flex items-center overflow-hidden px-6">
-<div id="top-event-container" class="text-3xl text-gray-700 font-bold truncate w-full">（行事予定なし）</div>
-</div>
-</div>
-</div>
+    <div class="p-6 pb-2 space-y-6">
+        <div class="flex items-center h-24 space-x-6">
+            <div class="glass-card px-10 h-full flex items-center justify-center bg-white flex-shrink-0">
+                <p class="text-date text-gray-700" id="current-date">--月--日</p>
+            </div>
+            <div class="flex-1 h-full flex items-center overflow-hidden px-6">
+                <div id="top-event-container" class="text-3xl text-gray-700 font-bold truncate w-full">（行事予定なし）</div>
+            </div>
+        </div>
+    </div>
 
-<div id="dashboard-main-content" class="flex-1 px-6 pb-4 overflow-hidden"></div>
+    <div id="dashboard-main-content" class="flex-1 px-6 pb-4 overflow-hidden"></div>
 
-<div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center shadow-sm px-4">
-<div id="urgent-badge-container" class="pl-4 pr-6 bg-white h-full flex items-center z-10 flex-shrink-0">
-<span class="text-red-600 text-3xl font-bold">臨時</span>
-</div>
-<div class="flex-1 overflow-hidden h-full flex items-center mr-4">
-<div id="ticker-container" class="ticker-wrap">
-<div id="urgent-text-container" class="text-4xl font-bold">久慈翔北高校　生徒用デジタル掲示板</div>
-</div>
-</div>
-<div class="h-full flex items-center justify-center flex-shrink-0 bg-white border-l pl-4">
-<div id="qrcode"></div>
-</div>
-</div>
+    <div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center shadow-sm px-4">
+        <div id="urgent-badge-container" class="pl-4 pr-6 bg-white h-full flex items-center z-10 flex-shrink-0">
+            <span class="text-red-600 text-3xl font-bold">臨時</span>
+        </div>
+        <div class="flex-1 overflow-hidden h-full flex items-center mr-4">
+            <div id="ticker-container" class="ticker-wrap">
+                <div id="urgent-text-container" class="text-4xl font-bold">久慈翔北高校　生徒用デジタル掲示板</div>
+            </div>
+        </div>
+        <div class="h-full flex items-center justify-center flex-shrink-0 bg-white border-l pl-4">
+            <div id="qrcode"></div>
+        </div>
+    </div>
 </div>
 
 <div id="screen-edit" class="hidden h-full bg-gray-50 fixed inset-0 z-50 overflow-hidden flex flex-col">
-<div class="max-w-4xl mx-auto w-full h-full flex flex-col shadow-2xl bg-white">
-<div class="bg-white px-4 py-4 shadow flex justify-between items-center">
-<h2 class="text-xl font-bold text-gray-700">データ入力・管理</h2>
-<div class="flex gap-2">
-<button onclick="showScreen('dashboard')" class="text-blue-600 font-bold border border-blue-600 px-4 py-2 rounded-lg">大画面へ</button>
-<button onclick="showScreen('entrance')" class="text-gray-400 font-bold border border-gray-300 px-4 py-2 rounded-lg">終了</button>
-</div>
-</div>
-<div class="flex bg-white shadow-sm z-10">
-<button onclick="switchEditTab('notice')" id="tab-notice" class="tab-btn flex-1 py-5 text-lg font-bold">連絡事項</button>
-<button onclick="switchEditTab('schedule')" id="tab-schedule" class="tab-btn flex-1 py-5 text-lg font-bold">時間割変更</button>
-</div>
-<div id="view-edit-notice" class="flex-1 flex flex-col overflow-hidden">
-<div class="p-4 bg-white shadow-sm">
-<button onclick="openModal('create')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 連絡事項を追加</button>
-</div>
-<div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-list-container"></div>
-</div>
-<div id="view-edit-schedule" class="flex-1 flex flex-col overflow-hidden hidden">
-<div class="p-4 bg-white shadow-sm">
-<button onclick="openScheduleModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 時間割変更を追加</button>
-</div>
-<div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-schedule-list-container"></div>
-</div>
-</div>
+    <div class="max-w-4xl mx-auto w-full h-full flex flex-col shadow-2xl bg-white">
+        <div class="bg-white px-4 py-4 shadow flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-700">データ入力・管理</h2>
+            <div class="flex gap-2">
+                <button onclick="showScreen('dashboard')" class="text-blue-600 font-bold border border-blue-600 px-4 py-2 rounded-lg">大画面へ</button>
+                <button onclick="showScreen('entrance')" class="text-gray-400 font-bold border border-gray-300 px-4 py-2 rounded-lg">終了</button>
+            </div>
+        </div>
+        <div class="flex bg-white shadow-sm z-10">
+            <button onclick="switchEditTab('notice')" id="tab-notice" class="tab-btn flex-1 py-5 text-lg font-bold">連絡事項</button>
+            <button onclick="switchEditTab('schedule')" id="tab-schedule" class="tab-btn flex-1 py-5 text-lg font-bold">時間割変更</button>
+            <button onclick="switchEditTab('access')" id="tab-access" class="tab-btn flex-1 py-5 text-lg font-bold">職員室入室制限</button>
+        </div>
+
+        <div id="view-edit-notice" class="flex-1 flex flex-col overflow-hidden">
+            <div class="p-4 bg-white shadow-sm"><button onclick="openModal('create')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 連絡事項を追加</button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-list-container"></div>
+        </div>
+
+        <div id="view-edit-schedule" class="flex-1 flex flex-col overflow-hidden hidden">
+            <div class="p-4 bg-white shadow-sm"><button onclick="openScheduleModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 時間割変更を追加</button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-schedule-list-container"></div>
+        </div>
+
+        <div id="view-edit-access" class="flex-1 flex flex-col overflow-hidden hidden">
+            <div class="p-4 bg-white shadow-sm"><button onclick="openAccessModal()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold shadow-md">+ 入室制限を追加</button></div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-access-list-container"></div>
+        </div>
+    </div>
 </div>
 
 <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-<div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-<div class="flex justify-between items-center border-b pb-2"><h3 id="modal-title" class="font-bold text-lg">編集</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div>
-<div><label class="block text-sm font-bold text-gray-600 mb-1">投稿者</label><select id="modal-select-teacher" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select></div>
-<div class="flex justify-center space-x-2">
-<label class="cursor-pointer"><input type="radio" name="modalType" value="event" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold">行事</div></label>
-<label class="cursor-pointer"><input type="radio" name="modalType" value="urgent" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-red-500 peer-checked:text-red-600 peer-checked:bg-red-50 font-bold">臨時</div></label>
-<label class="cursor-pointer"><input type="radio" name="modalType" value="student" class="peer hidden" checked><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 font-bold">生徒</div></label>
-</div>
-<input type="text" id="modal-input-title" class="w-full p-4 border-2 rounded-xl outline-none focus:border-blue-500 text-lg" placeholder="内容を入力...">
-<div class="flex flex-col space-y-2">
-<button onclick="saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
-<button onclick="deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold">このデータを削除</button>
-</div>
-</div>
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2"><h3 id="modal-title" class="font-bold text-lg">編集</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div>
+        <div><label class="block text-sm font-bold text-gray-600 mb-1">投稿者</label><select id="modal-select-teacher" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select></div>
+        <div class="flex justify-center space-x-2">
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="event" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold">行事</div></label>
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="urgent" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-red-500 peer-checked:text-red-600 peer-checked:bg-red-50 font-bold">臨時</div></label>
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="student" class="peer hidden" checked><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 font-bold">生徒</div></label>
+        </div>
+        <input type="text" id="modal-input-title" class="w-full p-4 border-2 rounded-xl outline-none focus:border-blue-500 text-lg" placeholder="内容を入力...">
+        <div class="flex flex-col space-y-2">
+            <button onclick="saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
+            <button onclick="deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold">このデータを削除</button>
+        </div>
+    </div>
 </div>
 
 <div id="schedule-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-<div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-<div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">時間割変更の追加</h3><button onclick="closeScheduleModal()" class="text-2xl">&times;</button></div>
-<p id="schedule-time-notice" class="text-xs text-red-500 font-bold hidden">※15:30以降のため、日付が1日繰り越されています</p>
-<div class="flex space-x-1">
-<label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="0" class="peer hidden" checked><div class="py-2 rounded-lg border-2 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 font-bold text-xs">今日<br><span id="label-today"></span></div></label>
-<label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="1" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold text-xs">明日<br><span id="label-tomorrow"></span></div></label>
-<label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="2" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-orange-500 peer-checked:text-orange-600 peer-checked:bg-orange-50 font-bold text-xs">明後日<br><span id="label-afternext"></span></div></label>
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">時間割変更の追加</h3><button onclick="closeScheduleModal()" class="text-2xl">&times;</button></div>
+        <p id="schedule-time-notice" class="text-xs text-red-500 font-bold hidden">※15:30以降のため、日付が1日繰り越されています</p>
+        <div class="flex space-x-1">
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="0" class="peer hidden" checked><div class="py-2 rounded-lg border-2 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 font-bold text-xs">今日<br><span id="label-today"></span></div></label>
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="1" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold text-xs">明日<br><span id="label-tomorrow"></span></div></label>
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="2" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-orange-500 peer-checked:text-orange-600 peer-checked:bg-orange-50 font-bold text-xs">明後日<br><span id="label-afternext"></span></div></label>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <select id="sch-class" class="p-3 border-2 rounded-xl bg-white font-bold"></select>
+            <select id="sch-period" class="p-3 border-2 rounded-xl bg-white font-bold">
+                <option value="1">1校時</option><option value="2">2校時</option><option value="3">3校時</option>
+                <option value="4">4校時</option><option value="5">5校時</option><option value="6">6校時</option>
+            </select>
+        </div>
+        <select id="sch-subject" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select>
+        <button onclick="saveSchedule()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">変更を追加</button>
+    </div>
 </div>
-<div class="grid grid-cols-2 gap-4">
-<select id="sch-class" class="p-3 border-2 rounded-xl bg-white font-bold"></select>
-<select id="sch-period" class="p-3 border-2 rounded-xl bg-white font-bold">
-<option value="1">1校時</option><option value="2">2校時</option><option value="3">3校時</option>
-<option value="4">4校時</option><option value="5">5校時</option><option value="6">6校時</option>
-</select>
-</div>
-<select id="sch-subject" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select>
-<button onclick="saveSchedule()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">変更を追加</button>
-</div>
+
+<div id="access-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg text-red-600">入室制限の設定</h3><button onclick="closeAccessModal()" class="text-2xl">&times;</button></div>
+        
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">制限日</label>
+            <input type="date" id="acc-date" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+        </div>
+        
+        <div class="flex items-center space-x-2 py-1">
+            <input type="checkbox" id="acc-repeat" class="w-5 h-5 cursor-pointer">
+            <label for="acc-repeat" class="font-bold text-gray-700 cursor-pointer text-sm">毎日繰り返す（朝会など）</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-600 mb-1">開始時間</label>
+                <input type="time" id="acc-start" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-600 mb-1">終了時間</label>
+                <input type="time" id="acc-end" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">理由（ピッカーで選択）</label>
+            <select id="acc-reason" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+                <option value="職員会議">職員会議</option>
+                <option value="職員朝会">職員朝会</option>
+                <option value="会議">会議</option>
+            </select>
+        </div>
+
+        <div class="flex flex-col space-y-2 pt-2">
+            <button onclick="saveAccess()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold text-lg shadow">この制限を保存する</button>
+        </div>
+    </div>
 </div>
 
 <script>
         const CONFIG = {
             classes: ['TE1', 'ME2', 'CE2', 'ME3', 'CE3'],
-            subjects: ['国表', '現国', '言語', '地総', '公共', '歴総', '数Ⅰ', '数Ⅱ', '科人', '物基', '家総', '体育', '保健', '英Ⅰ', '英Ⅱ', '美術', '機設', '工基', '実習', '課研', '情数', '電機', '製図', '土施', '社基', '測量', '土基','生産', '建計', '建施', '建構', '建設', '建法', 'LHR', '学校行事'],
+            subjects: ['国表', '現国', '言語', '地総', '公共', '歴総', '数Ⅰ', '数Ⅱ', '科人', '物基', '家総', '体育', '保健', '英Ⅰ', '英Ⅱ', '美術', '機設', '工基', '実習', '課研', '情数', '電機', '製図', '土施', '社基', '測量', '土基', '建計', '建施', '建構', '建設', '建法', 'LHR', '学校行事'],
             teachers: [
                 { name: '山﨑萌' }, { name: '佐々木佳' }, { name: '浅水' }, { name: '多田' }, { name: '山﨑泰' }, 
                 { name: '鶴嶋' }, { name: '内村' }, { name: '吉田' }, { name: '熊谷' }, { name: '山口香' }, 
                 { name: '山口正' }, { name: '永田' }, { name: '谷口' }, { name: '近藤' }, { name: '福士' }, 
                 { name: '木澤畑' }, { name: '日當' }, { name: '梅内' }, { name: '佐藤' }, { name: '千葉' }, 
-                { name: '小幡' }, { name: '北田' }, { name: '芦渡' }, { name: '事務室' }, { name: '遠藤' }, { name: '副校長' }
+                { name: '小幡' }, { name: '北田' }, { name: '芦渡' }, { name: '事務室' }, { name: '副校長' }
             ]
         };
 
@@ -299,19 +331,23 @@
             measurementId: "G-1E4P6SZ7ZF"
         };
 
-        let notices = [], scheduleData = [];
-        let noticesRef, scheduleRef;
+        let notices = [], scheduleData = [], accessData = [];
+        let noticesRef, scheduleRef, accessRef;
         let globalPageIndex = 0;
-        const ITEMS_PER_PAGE = 5; 
+        const ITEMS_PER_PAGE = 5;
 
         try {
             firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
             noticesRef = db.ref('notices');
             scheduleRef = db.ref('schedule_changes');
+            accessRef = db.ref('access_restrictions');
+
             firebase.auth().signInAnonymously().then(() => {
                 document.getElementById('loading').classList.add('hidden');
             });
+
+            // リアルタイム同期
             noticesRef.on('value', (snapshot) => {
                 const data = snapshot.val(); notices = [];
                 if (data) Object.keys(data).forEach(key => notices.push({ id: key, ...data[key] }));
@@ -323,58 +359,29 @@
                 if (data) Object.keys(data).forEach(key => scheduleData.push({ id: key, ...data[key] }));
                 cleanupOldData(); updateAllViews();
             });
+            accessRef.on('value', (snapshot) => {
+                const data = snapshot.val(); accessData = [];
+                if (data) Object.keys(data).forEach(key => accessData.push({ id: key, ...data[key] }));
+                updateAllViews();
+            });
         } catch (e) { console.error(e); }
 
+        // --- ヘルパー関数群（維持） ---
         function getSchoolDate(offset) {
             let d = new Date();
             if (d.getDay() === 6) d.setDate(d.getDate() + 2);
             else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-
             let count = 0;
             while (count < offset) {
                 d.setDate(d.getDate() + 1);
-                if (d.getDay() !== 0 && d.getDay() !== 6) {
-                    count++;
-                }
+                if (d.getDay() !== 0 && d.getDay() !== 6) count++;
             }
             return d;
         }
 
         function isAfterCutoff() {
-            const now = new Date();
-            const hour = now.getHours();
-            const min = now.getMinutes();
-            // 15:30 = 15時30分
+            const now = new Date(); const hour = now.getHours(); const min = now.getMinutes();
             return (hour > 15 || (hour === 15 && min >= 30));
-        }
-
-        function cleanupOldData() {
-            const todayStr = getYmd(new Date());
-            scheduleData.forEach(item => { if (item.targetDate && item.targetDate < todayStr) scheduleRef.child(item.id).remove(); });
-        }
-
-        function updateAllViews() {
-            if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
-            if (!document.getElementById('screen-edit').classList.contains('hidden')) { renderEditList(); renderScheduleEditList(); }
-        }
-
-        function showScreen(screenId) {
-            ['screen-entrance', 'screen-dashboard', 'screen-edit'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('screen-' + screenId).classList.remove('hidden');
-            if (screenId === 'dashboard') {
-                updateDate(); generateQRCode(); globalPageIndex = 0; updateDashboard();
-                resetInterval();
-            } else if (screenId === 'edit') { renderEditList(); renderScheduleEditList(); switchEditTab('notice'); }
-        }
-
-        function resetInterval() {
-            if(window.pageInterval) clearInterval(window.pageInterval);
-            window.pageInterval = setInterval(nextPage, 10000);
-        }
-
-        function manualNextPage() {
-            nextPage();
-            resetInterval();
         }
 
         function getYmd(date) {
@@ -387,20 +394,131 @@
             return `${date.getMonth() + 1}月${date.getDate()}日(${days[date.getDay()]})`;
         }
 
+        function cleanupOldData() {
+            const todayStr = getYmd(new Date());
+            scheduleData.forEach(item => { if (item.targetDate && item.targetDate < todayStr) scheduleRef.child(item.id).remove(); });
+        }
+
+        // --- 管理画面タブ切り替え ---
+        function switchEditTab(tab) {
+            const tabs = ['notice', 'schedule', 'access'];
+            tabs.forEach(t => {
+                document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+                document.getElementById('view-edit-' + t).classList.toggle('hidden', t !== tab);
+            });
+            if (tab === 'notice') renderEditList();
+            if (tab === 'schedule') renderScheduleEditList();
+            if (tab === 'access') renderAccessEditList();
+        }
+
+        // --- 入室制限管理ロジック ---
+        function openAccessModal() {
+            document.getElementById('access-modal').classList.remove('hidden');
+            document.getElementById('acc-date').value = getYmd(new Date());
+        }
+        function closeAccessModal() { document.getElementById('access-modal').classList.add('hidden'); }
+        function saveAccess() {
+            const date = document.getElementById('acc-date').value;
+            const repeat = document.getElementById('acc-repeat').checked;
+            const start = document.getElementById('acc-start').value;
+            const end = document.getElementById('acc-end').value;
+            const reason = document.getElementById('acc-reason').value;
+            if(!start || !end) return alert("開始時間と終了時間を入力してください");
+            accessRef.push({ date, repeat, start, end, reason, timestamp: Date.now() });
+            closeAccessModal();
+        }
+        function renderAccessEditList() {
+            const container = document.getElementById('edit-access-list-container');
+            container.innerHTML = '';
+            if (accessData.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>'; return; }
+            accessData.forEach(a => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center mb-2";
+                item.innerHTML = `
+                    <div>
+                        <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded mr-2">${a.reason}</span>
+                        <span class="text-gray-500 text-sm font-bold">${a.repeat ? '毎日' : a.date}</span>
+                        <div class="font-bold text-gray-700 mt-1">${a.start} 〜 ${a.end}</div>
+                    </div>
+                    <button onclick="deleteAccess('${a.id}')" class="text-red-400 font-bold px-3 py-1 border border-red-200 rounded-lg">削除</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+        function deleteAccess(id) { if(confirm("この制限設定を削除しますか？")) accessRef.child(id).remove(); }
+
+        // --- ダッシュボード表示ロジック ---
+
+        function updateAllViews() {
+            if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
+            if (!document.getElementById('screen-edit').classList.contains('hidden')) { renderEditList(); renderScheduleEditList(); renderAccessEditList(); }
+        }
+
+        function showScreen(screenId) {
+            ['screen-entrance', 'screen-dashboard', 'screen-edit'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('screen-' + screenId).classList.remove('hidden');
+            if (screenId === 'dashboard') {
+                updateDate(); generateQRCode(); globalPageIndex = 0; updateDashboard();
+                resetInterval();
+            } else if (screenId === 'edit') { switchEditTab('notice'); }
+        }
+
+        function resetInterval() {
+            if(window.pageInterval) clearInterval(window.pageInterval);
+            window.pageInterval = setInterval(nextPage, 10000);
+        }
+
+        function manualNextPage() { nextPage(); resetInterval(); }
+
         function nextPage() {
             const studentNotices = notices.filter(n => n.target === 'student');
             const totalNoticePages = Math.ceil(studentNotices.length / ITEMS_PER_PAGE) || 1;
-            const totalPages = 1 + totalNoticePages;
+            
+            // 現在時刻が入室制限中か判定
+            const activeAccess = getActiveAccess();
+            const accessPageCount = activeAccess ? 1 : 0;
+
+            const totalPages = 1 + totalNoticePages + accessPageCount; // 時間割 + 連絡事項 + (入室制限)
             globalPageIndex = (globalPageIndex + 1) % totalPages;
             updateDashboard();
+        }
+
+        function getActiveAccess() {
+            const now = new Date();
+            const todayStr = getYmd(now);
+            const nowTime = now.getHours() * 60 + now.getMinutes();
+            return accessData.find(a => {
+                const [hStart, mStart] = a.start.split(':').map(Number);
+                const [hEnd, mEnd] = a.end.split(':').map(Number);
+                const startVal = hStart * 60 + mStart;
+                const endVal = hEnd * 60 + mEnd;
+                const isCorrectDay = a.repeat || (a.date === todayStr);
+                return isCorrectDay && (nowTime >= startVal && nowTime <= endVal);
+            });
         }
 
         function updateDashboard() {
             updateTopEventDisplay(); updateBottomUrgentTicker(); updateDate();
             const container = document.getElementById('dashboard-main-content');
             container.innerHTML = '';
-            if (globalPageIndex === 0) renderSchedulePage(container); else renderNoticePage(container, globalPageIndex - 1);
+
+            const studentNotices = notices.filter(n => n.target === 'student');
+            const totalNoticePages = Math.ceil(studentNotices.length / ITEMS_PER_PAGE) || 1;
+            const activeAccess = getActiveAccess();
+
+            if (globalPageIndex === 0) {
+                renderSchedulePage(container);
+            } else if (globalPageIndex <= totalNoticePages) {
+                renderNoticePage(container, globalPageIndex - 1);
+            } else if (activeAccess) {
+                renderForbiddenPage(container, activeAccess);
+            } else {
+                globalPageIndex = 0; // 該当なしなら最初に戻る
+                renderSchedulePage(container);
+            }
         }
+
+        // --- 画面レンダリング（復元・追加） ---
 
         function renderSchedulePage(container) {
             const schoolToday = getSchoolDate(0);
@@ -420,65 +538,42 @@
             const todayGroups = filterAndSort(todayStr);
             const tomorrowGroups = filterAndSort(tomorrowStr);
 
-            // 動的フォントサイズ計算: 変更総数に応じてクラスを決定
             const totalItems = todayGroups.reduce((acc, g) => acc + g.items.length, 0) + tomorrowGroups.reduce((acc, g) => acc + g.items.length, 0);
-            let fontSizeSubject = "text-2xl";
-            let fontSizePeriod = "text-lg";
-            let cardPadding = "py-2";
-
-            if (totalItems <= 4) {
-                fontSizeSubject = "text-5xl"; 
-                fontSizePeriod = "text-2xl";
-                cardPadding = "py-6";
-            } else if (totalItems <= 8) {
-                fontSizeSubject = "text-4xl";
-                fontSizePeriod = "text-xl";
-                cardPadding = "py-4";
-            } else if (totalItems <= 12) {
-                fontSizeSubject = "text-3xl";
-                fontSizePeriod = "text-lg";
-                cardPadding = "py-3";
-            }
+            let fontSizeSubject = "text-2xl"; let fontSizePeriod = "text-lg"; let cardPadding = "py-2";
+            if (totalItems <= 4) { fontSizeSubject = "text-5xl"; fontSizePeriod = "text-2xl"; cardPadding = "py-6"; }
+            else if (totalItems <= 8) { fontSizeSubject = "text-4xl"; fontSizePeriod = "text-xl"; cardPadding = "py-4"; }
+            else if (totalItems <= 12) { fontSizeSubject = "text-3xl"; fontSizePeriod = "text-lg"; cardPadding = "py-3"; }
 
             const wrap = document.createElement('div');
             wrap.className = "flex h-full space-x-8 anim-cascade";
 
             const createColumn = (label, dateObj, groups, textColor, badgeBg) => {
                 const dateText = getDisplayDate(dateObj);
-                let html = `
-                    <div class="flex-1 flex flex-col h-full overflow-hidden">
+                let html = `<div class="flex-1 flex flex-col h-full overflow-hidden">
                     <div class="pb-5 pl-2 flex items-center">
-                    <div class="day-badge ${textColor} ${badgeBg}">${label}</div>
-                    <span class="text-4xl ml-5 font-extrabold ${textColor}">${dateText} の時間割変更</span>
+                        <div class="day-badge ${textColor} ${badgeBg}">${label}</div>
+                        <span class="text-4xl ml-5 font-extrabold ${textColor}">${dateText}</span>
                     </div>
-                    <div class="flex-1 overflow-hidden">
-                `;
+                    <div class="flex-1 overflow-hidden">`;
                 if (groups.length === 0) {
                     html += `<p class="text-gray-400 text-3xl p-8 text-center mt-10">${label}の変更はありません</p>`;
                 } else {
                     groups.forEach(g => {
-                        let rows = g.items.map(i => `
-                            <div class="flex items-center mb-1">
+                        let rows = g.items.map(i => `<div class="flex items-center mb-1">
                                 <span class="${fontSizePeriod} bg-gray-200 px-3 py-0.5 rounded-lg text-gray-600 mr-4 font-bold w-32 text-center">${i.period}校時</span>
                                 <span class="${fontSizeSubject} font-black text-gray-800">${i.subject}</span>
                             </div>`).join('');
-                        html += `
-                            <div class="change-card ${cardPadding}">
-                            <div class="flex flex-col items-center justify-center w-28 flex-shrink-0">
-                            <div class="font-black text-gray-700 text-4xl leading-none">${g.class}</div>
-                            </div>
-                            <div class="flex-1 px-4 flex flex-col justify-center">${rows}</div>
-                            </div>
-                        `;
+                        html += `<div class="change-card ${cardPadding}">
+                                <div class="font-black text-gray-700 text-4xl w-28 text-center">${g.class}</div>
+                                <div class="flex-1 px-4 flex flex-col justify-center">${rows}</div>
+                            </div>`;
                     });
                 }
                 html += `</div></div>`;
                 return html;
             };
 
-            wrap.innerHTML = 
-                createColumn("今日", schoolToday, todayGroups, "text-blue-600", "bg-blue-50") + 
-                createColumn("明日", schoolTomorrow, tomorrowGroups, "text-green-600", "bg-green-50");
+            wrap.innerHTML = createColumn("今日", schoolToday, todayGroups, "text-blue-600", "bg-blue-50") + createColumn("明日", schoolTomorrow, tomorrowGroups, "text-green-600", "bg-green-50");
             container.appendChild(wrap);
         }
 
@@ -486,39 +581,42 @@
             const list = notices.filter(n => n.target === 'student');
             const start = pageIdx * ITEMS_PER_PAGE;
             const displayList = list.slice(start, start + ITEMS_PER_PAGE);
-
-            let html = `
-                <div class="w-full flex flex-col h-full anim-cascade">
-                <div class="pb-5 pl-2 flex items-center">
+            let html = `<div class="w-full flex flex-col h-full anim-cascade"><div class="pb-5 pl-2 flex items-center">
                 <span class="text-4xl font-extrabold text-gray-600">連絡事項 (${pageIdx + 1}/${Math.ceil(list.length/ITEMS_PER_PAGE) || 1})</span>
-                </div>
-                <div class="flex-1">
-            `;
-
+                </div><div class="flex-1">`;
             if (displayList.length === 0) {
                 html += `<div class='text-gray-400 text-3xl p-8 text-center mt-10'>表示する連絡はありません</div>`;
             } else {
                 displayList.forEach((n, i) => {
-                    const teacherName = n.teacherName || '不明';
-                    html += `
-                        <div class="notice-card w-full bg-white" style="animation-delay: ${i * 0.1}s">
-                        <div class="icon-section">
-                        <div class="teacher-badge">${teacherName}</div>
-                        </div>
+                    html += `<div class="notice-card w-full bg-white">
+                        <div class="icon-section"><div class="teacher-badge">${n.teacherName || '不明'}</div></div>
                         <h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3>
-                        </div>
-                    `;
+                    </div>`;
                 });
             }
             html += `</div></div>`;
             container.innerHTML = html;
         }
 
+        // 入室制限ページの表示
+        function renderForbiddenPage(container, access) {
+            container.innerHTML = `
+                <div class="h-full w-full flex flex-col items-center justify-center bg-red-600 rounded-[40px] text-white shadow-2xl anim-cascade border-[15px] border-white">
+                    <div class="text-[14rem] font-black leading-none mb-2">入室禁止</div>
+                    <div class="text-6xl font-bold mb-10">${access.reason}のため</div>
+                    <div class="bg-white text-red-600 px-16 py-8 rounded-[30px] text-8xl font-black shadow-lg">
+                        ${access.start} 〜 ${access.end}
+                    </div>
+                    <div class="mt-12 text-4xl font-bold opacity-90">※急用を除き、入室を控えてください</div>
+                </div>
+            `;
+        }
+
+        // --- その他の既存機能 ---
         function updateTopEventDisplay() {
             const list = notices.filter(n => n.target === 'event').map(n => n.title);
             document.getElementById('top-event-container').textContent = list.length ? list.join("　　/　　") : "（行事予定なし）";
         }
-
         function updateBottomUrgentTicker() {
             const badge = document.getElementById('urgent-badge-container');
             const container = document.getElementById('urgent-text-container');
@@ -531,116 +629,68 @@
                 container.className = "text-4xl text-black font-bold px-4 text-left"; 
             }
         }
+        function generateQRCode() { const c = document.getElementById('qrcode'); c.innerHTML = ""; new QRCode(c, { text:"https://kjs-hs.note.jp", width: 64, height: 64 }); }
+        function updateDate() { const el = document.getElementById('current-date'); if(el) el.textContent = getDisplayDate(new Date()); }
 
-        function switchEditTab(tab) {
-            const btnNotice = document.getElementById('tab-notice'); const btnSchedule = document.getElementById('tab-schedule');
-            const viewNotice = document.getElementById('view-edit-notice'); const viewSchedule = document.getElementById('view-edit-schedule');
-            if (tab === 'notice') { btnNotice.classList.add('active'); btnSchedule.classList.remove('active'); viewNotice.classList.remove('hidden'); viewSchedule.classList.add('hidden'); }
-            else { btnSchedule.classList.add('active'); btnNotice.classList.remove('active'); viewSchedule.classList.remove('hidden'); viewNotice.classList.add('hidden'); }
-        }
-
+        // 連絡事項管理
         function renderEditList() {
             const container = document.getElementById('edit-list-container'); container.innerHTML = '';
-            if (notices.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>'; return; }
             notices.forEach(n => {
                 const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl shadow-sm border flex items-center justify-between cursor-pointer active:bg-gray-50";
+                item.className = "bg-white p-4 rounded-xl shadow-sm border flex items-center justify-between cursor-pointer";
                 item.onclick = () => openModal('edit', n.id);
-                let bClass = n.target === 'urgent' ? 'bg-red-100 text-red-600' : (n.target === 'event' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600');
-                item.innerHTML = `<div class="flex items-center"><span class="${bClass} text-xs font-bold px-2 py-1 rounded mr-3">${n.target==='urgent'?'臨時':(n.target==='event'?'行事':'生徒')}</span><span class="font-bold text-gray-700">${n.title}</span></div><span class="text-gray-300">修正 &rsaquo;</span>`;
+                item.innerHTML = `<div class="flex items-center"><span class="font-bold text-gray-700">${n.title}</span></div><span class="text-gray-300">&rsaquo;</span>`;
                 container.appendChild(item);
             });
         }
-
         function openModal(mode, id = null) {
             window.currentEditId = id; document.getElementById('edit-modal').classList.remove('hidden');
-            const teacherSelect = document.getElementById('modal-select-teacher');
-            teacherSelect.innerHTML = CONFIG.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-            const deleteBtn = document.getElementById('btn-delete');
-            if (mode === 'create') { document.getElementById('modal-title').textContent = "新規作成"; document.getElementById('modal-input-title').value = ""; deleteBtn.classList.add('hidden'); }
-            else {
+            document.getElementById('modal-select-teacher').innerHTML = CONFIG.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+            if (mode === 'create') { document.getElementById('modal-title').textContent = "新規作成"; document.getElementById('modal-input-title').value = ""; document.getElementById('btn-delete').classList.add('hidden'); }
+            else { 
                 const data = notices.find(n => n.id === id);
-                document.getElementById('modal-title').textContent = "修正"; document.getElementById('modal-input-title').value = data.title;
-                teacherSelect.value = data.teacherName || ''; deleteBtn.classList.remove('hidden');
-                document.querySelector(`input[name="modalType"][value="${data.target}"]`).checked = true;
+                document.getElementById('modal-input-title').value = data.title;
+                document.getElementById('modal-select-teacher').value = data.teacherName;
+                document.getElementById('btn-delete').classList.remove('hidden');
             }
         }
-
         function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-
         function saveData() {
-            const id = window.currentEditId; const title = document.getElementById('modal-input-title').value;
+            const title = document.getElementById('modal-input-title').value;
             const teacherName = document.getElementById('modal-select-teacher').value;
-            if(!title) return alert("内容を入力してください");
-            const type = document.querySelector('input[name="modalType"]:checked').value;
-            const payload = { title, target: type, teacherName, timestamp: id ? notices.find(n=>n.id===id).timestamp : Date.now() };
-            if (id) noticesRef.child(id).update(payload); else noticesRef.push(payload); closeModal();
+            const target = document.querySelector('input[name="modalType"]:checked').value;
+            if (window.currentEditId) noticesRef.child(window.currentEditId).update({ title, teacherName, target });
+            else noticesRef.push({ title, teacherName, target, timestamp: Date.now() });
+            closeModal();
         }
-
         function deleteData() { if(confirm("削除しますか？")) { noticesRef.child(window.currentEditId).remove(); closeModal(); } }
 
-        function renderScheduleEditList() {
-            const container = document.getElementById('edit-schedule-list-container'); container.innerHTML = '';
-            const todayStr = getYmd(new Date()); const filtered = scheduleData.filter(s => s.targetDate >= todayStr);
-            if (filtered.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>'; return; }
-            filtered.sort((a,b)=> (a.timestamp || 0) - (b.timestamp || 0)).forEach(s => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center cursor-pointer active:bg-gray-50";
-                item.onclick = () => { if(confirm("削除しますか？")) scheduleRef.child(s.id).remove(); };
-                item.innerHTML = `<div class="flex items-center"><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded mr-3">${s.targetDate}</span><span class="font-bold text-blue-600 inline-block w-14">${s.class}</span><span class="font-bold text-gray-700">${s.period}校時 ${s.subject}</span></div><span class="text-red-400 font-bold ml-4">削除</span>`;
-                container.appendChild(item);
-            });
-        }
-
+        // 時間割管理
         function openScheduleModal() {
             document.getElementById('schedule-modal').classList.remove('hidden');
-            
-            // 15:30以降ならベースのオフセットを+1する
-            const offsetBase = isAfterCutoff() ? 1 : 0;
-            const timeNotice = document.getElementById('schedule-time-notice');
-            if (offsetBase > 0) timeNotice.classList.remove('hidden');
-            else timeNotice.classList.add('hidden');
-
-            const sToday = getSchoolDate(0 + offsetBase); 
-            const sTomorrow = getSchoolDate(1 + offsetBase); 
-            const sAfterNext = getSchoolDate(2 + offsetBase);
-
-            document.getElementById('label-today').textContent = getDisplayDate(sToday); 
-            document.getElementById('label-tomorrow').textContent = getDisplayDate(sTomorrow); 
-            document.getElementById('label-afternext').textContent = getDisplayDate(sAfterNext);
-
+            const offset = isAfterCutoff() ? 1 : 0;
+            document.getElementById('label-today').textContent = getDisplayDate(getSchoolDate(0 + offset));
+            document.getElementById('label-tomorrow').textContent = getDisplayDate(getSchoolDate(1 + offset));
+            document.getElementById('label-afternext').textContent = getDisplayDate(getSchoolDate(2 + offset));
             document.getElementById('sch-class').innerHTML = CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('sch-subject').innerHTML = CONFIG.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
         }
-
         function closeScheduleModal() { document.getElementById('schedule-modal').classList.add('hidden'); }
-
         function saveSchedule() {
             const radioVal = parseInt(document.querySelector('input[name="schDay"]:checked').value);
-            // 保存時も15:30以降ならオフセットを考慮
-            const offsetBase = isAfterCutoff() ? 1 : 0;
-            const targetDateObj = getSchoolDate(radioVal + offsetBase);
-
-            const payload = { 
-                targetDate: getYmd(targetDateObj), 
-                class: document.getElementById('sch-class').value, 
-                period: document.getElementById('sch-period').value, 
-                subject: document.getElementById('sch-subject').value, 
-                timestamp: Date.now() 
-            };
-            scheduleRef.push(payload); closeScheduleModal();
+            const targetDate = getYmd(getSchoolDate(radioVal + (isAfterCutoff() ? 1 : 0)));
+            scheduleRef.push({ targetDate, class: document.getElementById('sch-class').value, period: document.getElementById('sch-period').value, subject: document.getElementById('sch-subject').value, timestamp: Date.now() });
+            closeScheduleModal();
         }
-
-        function generateQRCode() {
-            const container = document.getElementById('qrcode'); container.innerHTML = "";
-            new QRCode(container, { text:"https://kjs-hs.note.jp", width: 64, height: 64 });
+        function renderScheduleEditList() {
+            const container = document.getElementById('edit-schedule-list-container'); container.innerHTML = '';
+            scheduleData.forEach(s => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center";
+                item.innerHTML = `<div><span class="text-xs bg-gray-100 px-2 py-1 rounded mr-2">${s.targetDate}</span><b>${s.class}</b> ${s.period}校時 ${s.subject}</div><button onclick="scheduleRef.child('${s.id}').remove()" class="text-red-400">削除</button>`;
+                container.appendChild(item);
+            });
         }
-
-        function updateDate() {
-            const el = document.getElementById('current-date'); if(el) el.textContent = getDisplayDate(new Date());
-        }
-
-        switchEditTab('notice');
 </script>
 </body>
 </html>
