@@ -1,21 +1,21 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>生徒連絡用DB - 入室制限対応版</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>生徒連絡用DB - 縦型画像全画面対応版</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;800&display=swap" rel="stylesheet">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
-<style>
+    <style>
         body, button, input, textarea, div, span, p, h1, h2, h3, h4, h5, h6, select, option {
             font-family: 'M PLUS Rounded 1c', sans-serif;
         }
@@ -24,6 +24,7 @@
             background-color: #F0F2F5;
             color: #333333;
             overflow: hidden;
+            height: 100vh;
         }
 
         .text-date { font-size: 3.5rem; letter-spacing: 0.05em; line-height: 1; font-weight: 800; } 
@@ -42,29 +43,8 @@
             padding: 0 2rem;
             display: flex;
             align-items: center;
-            height: 7.0rem; 
+            height: 7.0rem;
             margin-bottom: 0.8rem;
-        }
-
-        .status-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            margin-right: 10px;
-        }
-        .dot-gray { background-color: #4B5563; }
-        .dot-blue { background-color: #2563EB; }
-        .dot-green { background-color: #10B981; }
-
-        .icon-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 130px;
-            flex-shrink: 0;
-            margin-right: 1.5rem;
         }
 
         .teacher-badge {
@@ -99,13 +79,13 @@
         }
 
         .change-card {
-            background-color: white; 
-            padding: 1.2rem 1.5rem; 
-            border-radius: 1rem; 
+            background-color: white;
+            padding: 1.2rem 1.5rem;
+            border-radius: 1rem;
             margin-bottom: 1rem;
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             min-height: 6rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
         }
@@ -122,54 +102,78 @@
             line-height: 1;
         }
 
-        .control-panel {
-            position: fixed;
-            top: 1.5rem;
-            right: 1.5rem;
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 0.75rem;
-            z-index: 100;
-        }
+        .control-panel { position: fixed; top: 1.5rem; right: 1.5rem; display: flex; gap: 0.75rem; z-index: 100; }
         .btn-control {
             background-color: rgba(255, 255, 255, 0.9);
             border: 2px solid #E5E7EB;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
-            width: 3.5rem;
-            height: 3.5rem;
+            width: 3.5rem; height: 3.5rem;
             border-radius: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .image-grid-item {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .image-paper {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .image-paper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .image-caption {
+            height: 4rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.8rem;
+            color: #4B5563;
+            flex-shrink: 0;
+            word-break: break-all;
+            padding: 0 0.5rem;
         }
-        .btn-control:hover { transform: scale(1.05); background-color: white; border-color: #D1D5DB; }
-        .btn-control:active { transform: scale(0.95); }
-        .icon-gray { color: #6B7280; }
-</style>
+    </style>
 </head>
-<body class="h-screen flex flex-col bg-[#F0F2F5]">
+<body class="flex flex-col">
 
 <div id="loading" class="loading-overlay">
-<p class="text-3xl font-bold text-blue-600">Connecting...</p>
+    <p class="text-3xl font-bold text-blue-600">Connecting...</p>
 </div>
 
 <div id="screen-entrance" class="absolute inset-0 z-50 flex flex-col items-center justify-center space-y-8 bg-[#F0F2F5]">
-<h1 class="text-5xl font-bold text-gray-700">生徒連絡用DB</h1>
-<button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">大画面表示</button>
-<button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">データ入力・管理</button>
+    <h1 class="text-5xl font-bold text-gray-700">生徒連絡用DB</h1>
+    <button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">大画面表示</button>
+    <button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">データ入力・管理</button>
 </div>
 
 <div id="screen-dashboard" class="hidden h-full flex flex-col">
     <div class="control-panel">
-        <button onclick="showScreen('edit')" class="btn-control" title="データ管理"><span class="text-2xl icon-gray">⚙️</span></button>
-        <button onclick="manualNextPage()" class="btn-control" title="次のページ">
-            <svg class="w-8 h-8 icon-gray" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+        <button onclick="showScreen('edit')" class="btn-control"><span class="text-2xl">⚙️</span></button>
+        <button onclick="manualNextPage()" class="btn-control">
+            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
         </button>
     </div>
 
-    <div class="p-6 pb-2 space-y-6">
+    <div id="dashboard-header" class="p-6 pb-2 space-y-6">
         <div class="flex items-center h-24 space-x-6">
             <div class="glass-card px-10 h-full flex items-center justify-center bg-white flex-shrink-0">
                 <p class="text-date text-gray-700" id="current-date">--月--日</p>
@@ -182,7 +186,7 @@
 
     <div id="dashboard-main-content" class="flex-1 px-6 pb-4 overflow-hidden"></div>
 
-    <div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center shadow-sm px-4">
+    <div id="urgent-footer" class="h-20 bg-white border-t-4 border-gray-300 flex items-center shadow-sm px-4 flex-shrink-0">
         <div id="urgent-badge-container" class="pl-4 pr-6 bg-white h-full flex items-center z-10 flex-shrink-0">
             <span class="text-red-600 text-3xl font-bold">臨時</span>
         </div>
@@ -209,51 +213,81 @@
         <div class="flex bg-white shadow-sm z-10">
             <button onclick="switchEditTab('notice')" id="tab-notice" class="tab-btn flex-1 py-5 text-lg font-bold">連絡事項</button>
             <button onclick="switchEditTab('schedule')" id="tab-schedule" class="tab-btn flex-1 py-5 text-lg font-bold">時間割変更</button>
-            <button onclick="switchEditTab('access')" id="tab-access" class="tab-btn flex-1 py-5 text-lg font-bold">職員室入室制限</button>
+            <button onclick="switchEditTab('access')" id="tab-access" class="tab-btn flex-1 py-5 text-lg font-bold">入室制限</button>
+            <button onclick="switchEditTab('image')" id="tab-image" class="tab-btn flex-1 py-5 text-lg font-bold">ポスター連絡</button>
         </div>
 
-        <div id="view-edit-notice" class="flex-1 flex flex-col overflow-hidden">
-            <div class="p-4 bg-white shadow-sm"><button onclick="openModal('create')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 連絡事項を追加</button></div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-list-container"></div>
+        <div id="view-edit-notice" class="flex-1 flex flex-col overflow-hidden p-4">
+            <button onclick="openModal('create')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mb-4">+ 連絡事項を追加</button>
+            <div class="flex-1 overflow-y-auto space-y-2" id="edit-list-container"></div>
         </div>
-
-        <div id="view-edit-schedule" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="p-4 bg-white shadow-sm"><button onclick="openScheduleModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md">+ 時間割変更を追加</button></div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-schedule-list-container"></div>
+        <div id="view-edit-schedule" class="flex-1 flex flex-col overflow-hidden hidden p-4">
+            <button onclick="openScheduleModal()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mb-4">+ 時間割変更を追加</button>
+            <div class="flex-1 overflow-y-auto space-y-2" id="edit-schedule-list-container"></div>
         </div>
-
-        <div id="view-edit-access" class="flex-1 flex flex-col overflow-hidden hidden">
-            <div class="p-4 bg-white shadow-sm"><button onclick="openAccessModal()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold shadow-md">+ 入室制限を追加</button></div>
-            <div class="flex-1 overflow-y-auto p-4 space-y-2" id="edit-access-list-container"></div>
+        <div id="view-edit-access" class="flex-1 flex flex-col overflow-hidden hidden p-4">
+            <button onclick="openAccessModal()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold mb-4">+ 入室制限を追加</button>
+            <div class="flex-1 overflow-y-auto space-y-2" id="edit-access-list-container"></div>
+        </div>
+        <div id="view-edit-image" class="flex-1 flex flex-col overflow-hidden hidden p-4">
+            <button onclick="openImageModal()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mb-4">+ 画像（A4縦）を追加</button>
+            <div class="flex-1 overflow-y-auto space-y-2" id="edit-image-list-container"></div>
         </div>
     </div>
 </div>
 
 <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-        <div class="flex justify-between items-center border-b pb-2"><h3 id="modal-title" class="font-bold text-lg">編集</h3><button onclick="closeModal()" class="text-2xl">&times;</button></div>
-        <div><label class="block text-sm font-bold text-gray-600 mb-1">投稿者</label><select id="modal-select-teacher" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select></div>
-        <div class="flex justify-center space-x-2">
-            <label class="cursor-pointer"><input type="radio" name="modalType" value="event" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold">行事</div></label>
-            <label class="cursor-pointer"><input type="radio" name="modalType" value="urgent" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-red-500 peer-checked:text-red-600 peer-checked:bg-red-50 font-bold">臨時</div></label>
-            <label class="cursor-pointer"><input type="radio" name="modalType" value="student" class="peer hidden" checked><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-blue-500 peer-checked:text-blue-600 peer-checked:bg-blue-50 font-bold">生徒</div></label>
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 id="modal-title" class="font-bold text-lg">編集</h3>
+            <button onclick="closeModal()" class="text-2xl">&times;</button>
         </div>
-        <input type="text" id="modal-input-title" class="w-full p-4 border-2 rounded-xl outline-none focus:border-blue-500 text-lg" placeholder="内容を入力...">
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">投稿者</label>
+            <select id="modal-select-teacher" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select>
+        </div>
+        <div class="flex justify-center space-x-2">
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="event" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-green-500 peer-checked:text-green-600 font-bold">行事</div></label>
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="urgent" class="peer hidden"><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-red-500 peer-checked:text-red-600 font-bold">臨時</div></label>
+            <label class="cursor-pointer"><input type="radio" name="modalType" value="student" class="peer hidden" checked><div class="px-4 py-2 rounded-lg border-2 peer-checked:border-blue-500 peer-checked:text-blue-600 font-bold">生徒</div></label>
+        </div>
+        <input type="text" id="modal-input-title" class="w-full p-4 border-2 rounded-xl text-lg outline-none focus:border-blue-500" placeholder="連絡内容を入力...">
         <div class="flex flex-col space-y-2">
-            <button onclick="saveData()" id="btn-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">保存する</button>
+            <button onclick="saveData()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg">保存する</button>
             <button onclick="deleteData()" id="btn-delete" class="hidden w-full bg-white text-red-500 border border-red-500 py-3 rounded-xl font-bold">このデータを削除</button>
         </div>
     </div>
 </div>
 
+<div id="image-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="font-bold text-lg text-green-700">画像連絡の追加</h3>
+            <button onclick="closeImageModal()" class="text-2xl">&times;</button>
+        </div>
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">ファイル選択</label>
+            <input type="file" id="img-file" accept="image/*" class="w-full text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">タイトル</label>
+            <input type="text" id="img-title" class="w-full p-3 border-2 rounded-xl font-bold">
+        </div>
+        <div>
+            <label class="block text-sm font-bold text-gray-600 mb-1">表示日数</label>
+            <input type="number" id="img-days" class="w-full p-3 border-2 rounded-xl font-bold" value="3" min="1">
+        </div>
+        <button onclick="saveImage()" id="btn-save-image" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold text-lg">保存する</button>
+    </div>
+</div>
+
 <div id="schedule-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">時間割変更の追加</h3><button onclick="closeScheduleModal()" class="text-2xl">&times;</button></div>
-        <p id="schedule-time-notice" class="text-xs text-red-500 font-bold hidden">※15:30以降のため、日付が1日繰り越されています</p>
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg">時間割変更</h3><button onclick="closeScheduleModal()" class="text-2xl">&times;</button></div>
         <div class="flex space-x-1">
-            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="0" class="peer hidden" checked><div class="py-2 rounded-lg border-2 text-center peer-checked:border-blue-500 peer-checked:bg-blue-50 font-bold text-xs">今日<br><span id="label-today"></span></div></label>
-            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="1" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-green-500 peer-checked:text-green-600 peer-checked:bg-green-50 font-bold text-xs">明日<br><span id="label-tomorrow"></span></div></label>
-            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="2" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-orange-500 peer-checked:text-orange-600 peer-checked:bg-orange-50 font-bold text-xs">明後日<br><span id="label-afternext"></span></div></label>
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="0" checked class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-blue-500 font-bold text-xs">今日<br><span id="label-today"></span></div></label>
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="1" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-green-500 font-bold text-xs">明日<br><span id="label-tomorrow"></span></div></label>
+            <label class="flex-1 cursor-pointer"><input type="radio" name="schDay" value="2" class="peer hidden"><div class="py-2 rounded-lg border-2 text-center peer-checked:border-orange-500 font-bold text-xs">明後日<br><span id="label-afternext"></span></div></label>
         </div>
         <div class="grid grid-cols-2 gap-4">
             <select id="sch-class" class="p-3 border-2 rounded-xl bg-white font-bold"></select>
@@ -263,434 +297,442 @@
             </select>
         </div>
         <select id="sch-subject" class="w-full p-3 border-2 rounded-xl bg-white font-bold"></select>
-        <button onclick="saveSchedule()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-lg shadow">変更を追加</button>
+        <button onclick="saveSchedule()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">追加</button>
     </div>
 </div>
 
 <div id="access-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 space-y-4">
-        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg text-red-600">入室制限の設定</h3><button onclick="closeAccessModal()" class="text-2xl">&times;</button></div>
-        
-        <div>
-            <label class="block text-sm font-bold text-gray-600 mb-1">制限日</label>
-            <input type="date" id="acc-date" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
-        </div>
-        
-        <div class="flex items-center space-x-2 py-1">
-            <input type="checkbox" id="acc-repeat" class="w-5 h-5 cursor-pointer">
-            <label for="acc-repeat" class="font-bold text-gray-700 cursor-pointer text-sm">毎日繰り返す（朝会など）</label>
-        </div>
-
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2"><h3 class="font-bold text-lg text-red-600">入室制限</h3><button onclick="closeAccessModal()" class="text-2xl">&times;</button></div>
+        <input type="date" id="acc-date" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+        <div class="flex items-center space-x-2"><input type="checkbox" id="acc-repeat" class="w-5 h-5"><label for="acc-repeat" class="font-bold text-sm">毎日繰り返す</label></div>
         <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="block text-sm font-bold text-gray-600 mb-1">開始時間</label>
-                <input type="time" id="acc-start" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
-            </div>
-            <div>
-                <label class="block text-sm font-bold text-gray-600 mb-1">終了時間</label>
-                <input type="time" id="acc-end" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
-            </div>
+            <input type="time" id="acc-start" class="w-full p-3 border-2 rounded-xl font-bold">
+            <input type="time" id="acc-end" class="w-full p-3 border-2 rounded-xl font-bold">
         </div>
-
-        <div>
-            <label class="block text-sm font-bold text-gray-600 mb-1">理由（ピッカーで選択）</label>
-            <select id="acc-reason" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
-                <option value="職員会議">職員会議</option>
-                <option value="職員朝会">職員朝会</option>
-                <option value="会議">会議</option>
-            </select>
-        </div>
-
-        <div class="flex flex-col space-y-2 pt-2">
-            <button onclick="saveAccess()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold text-lg shadow">この制限を保存する</button>
-        </div>
+        <select id="acc-reason" class="w-full p-3 border-2 rounded-xl bg-white font-bold">
+            <option value="職員会議">職員会議</option><option value="職員朝会">職員朝会</option><option value="会議">会議</option>
+        </select>
+        <button onclick="saveAccess()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold">保存</button>
     </div>
 </div>
 
 <script>
-        const CONFIG = {
-            classes: ['TE1', 'ME2', 'CE2', 'ME3', 'CE3'],
-            subjects: ['国表', '現国', '言語', '地総', '公共', '歴総', '数Ⅰ', '数Ⅱ', '科人', '物基', '家総', '体育', '保健', '英Ⅰ', '英Ⅱ', '美術', '機設', '工基', '実習', '課研', '情数', '電機', '製図', '土施', '社基', '測量', '土基', '建計', '建施', '建構', '建設', '建法', 'LHR', '学校行事'],
-            teachers: [
-                { name: '山﨑萌' }, { name: '佐々木佳' }, { name: '浅水' }, { name: '多田' }, { name: '山﨑泰' }, 
-                { name: '鶴嶋' }, { name: '内村' }, { name: '吉田' }, { name: '熊谷' }, { name: '山口香' }, 
-                { name: '山口正' }, { name: '永田' }, { name: '谷口' }, { name: '近藤' }, { name: '福士' }, 
-                { name: '木澤畑' }, { name: '日當' }, { name: '梅内' }, { name: '佐藤' }, { name: '千葉' }, 
-                { name: '小幡' }, { name: '北田' }, { name: '芦渡' }, { name: '事務室' }, { name: '副校長' }
-            ]
-        };
+    const CONFIG = {
+        classes: ['TE1', 'ME2', 'CE2', 'ME3', 'CE3'],
+        subjects: ['国表', '現国', '言語', '地総', '公共', '歴総', '数Ⅰ', '数Ⅱ', '科人', '物基', '家総', '体育', '保健', '英Ⅰ', '英Ⅱ', '美術', '機設', '工基', '実習', '課研', '情数', '電機', '製図', '土施', '社基', '測量', '土基', '土構', '建計', '建施', '建構', '建設', '建法', 'LHR', '学校行事'],
+        teachers: [ { name: '山﨑萌' },  { name: '浅水' }, { name: '多田' }, { name: '山﨑泰' }, { name: '鶴嶋' }, { name: '内村' }, { name: '吉田' }, { name: '熊谷' }, { name: '山口香' }, { name: '山口正' }, { name: '永田' }, { name: '谷口' }, { name: '野田' }, { name: '福士' }, { name: '木澤畑' }, { name: '日當' }, { name: '梅内' }, { name: '佐藤' }, { name: '千葉' },  { name: '北田' }, { name: '芦渡' },{ name: '山崎乃' }, { name: '事務室' }, { name: '副校長' } ]
+    };
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAb5GbSvT8YCOJt6LYGWxLQvQLspFU3nWM",
-            authDomain: "school-map-quest.firebaseapp.com",
-            databaseURL: "https://school-map-quest-default-rtdb.firebaseio.com",
-            projectId: "school-map-quest",
-            storageBucket: "school-map-quest.firebasestorage.app",
-            messagingSenderId: "966814904764",
-            appId: "1:966814904764:web:e89a5c3cc542cdd56fbbb9",
-            measurementId: "G-1E4P6SZ7ZF"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyAb5GbSvT8YCOJt6LYGWxLQvQLspFU3nWM",
+        authDomain: "school-map-quest.firebaseapp.com",
+        databaseURL: "https://school-map-quest-default-rtdb.firebaseio.com",
+        projectId: "school-map-quest",
+        storageBucket: "school-map-quest.firebasestorage.app",
+        messagingSenderId: "966814904764",
+        appId: "1:966814904764:web:e89a5c3cc542cdd56fbbb9"
+    };
 
-        let notices = [], scheduleData = [], accessData = [];
-        let noticesRef, scheduleRef, accessRef;
-        let globalPageIndex = 0;
-        const ITEMS_PER_PAGE = 5;
+    let notices = [], scheduleData = [], accessData = [], imageData = [];
+    let noticesRef, scheduleRef, accessRef, imageRef;
+    let globalPageIndex = 0;
+    const ITEMS_PER_PAGE = 5;
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-            const db = firebase.database();
-            noticesRef = db.ref('notices');
-            scheduleRef = db.ref('schedule_changes');
-            accessRef = db.ref('access_restrictions');
+    try {
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        noticesRef = db.ref('notices');
+        scheduleRef = db.ref('schedule_changes');
+        accessRef = db.ref('access_restrictions');
+        imageRef = db.ref('image_notices');
 
-            firebase.auth().signInAnonymously().then(() => {
-                document.getElementById('loading').classList.add('hidden');
-            });
+        firebase.auth().signInAnonymously().then(() => {
+            document.getElementById('loading').classList.add('hidden');
+        });
 
-            // リアルタイム同期
-            noticesRef.on('value', (snapshot) => {
-                const data = snapshot.val(); notices = [];
-                if (data) Object.keys(data).forEach(key => notices.push({ id: key, ...data[key] }));
-                notices.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                updateAllViews();
-            });
-            scheduleRef.on('value', (snapshot) => {
-                const data = snapshot.val(); scheduleData = [];
-                if (data) Object.keys(data).forEach(key => scheduleData.push({ id: key, ...data[key] }));
-                cleanupOldData(); updateAllViews();
-            });
-            accessRef.on('value', (snapshot) => {
-                const data = snapshot.val(); accessData = [];
-                if (data) Object.keys(data).forEach(key => accessData.push({ id: key, ...data[key] }));
-                updateAllViews();
-            });
-        } catch (e) { console.error(e); }
-
-        // --- ヘルパー関数群（維持） ---
-        function getSchoolDate(offset) {
-            let d = new Date();
-            if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-            else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-            let count = 0;
-            while (count < offset) {
-                d.setDate(d.getDate() + 1);
-                if (d.getDay() !== 0 && d.getDay() !== 6) count++;
-            }
-            return d;
-        }
-
-        function isAfterCutoff() {
-            const now = new Date(); const hour = now.getHours(); const min = now.getMinutes();
-            return (hour > 15 || (hour === 15 && min >= 30));
-        }
-
-        function getYmd(date) {
-            const y = date.getFullYear(); const m = String(date.getMonth() + 1).padStart(2, '0'); const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function getDisplayDate(date) {
-            const days = ['日', '月', '火', '水', '木', '金', '土'];
-            return `${date.getMonth() + 1}月${date.getDate()}日(${days[date.getDay()]})`;
-        }
-
-        function cleanupOldData() {
-            const todayStr = getYmd(new Date());
-            scheduleData.forEach(item => { if (item.targetDate && item.targetDate < todayStr) scheduleRef.child(item.id).remove(); });
-        }
-
-        // --- 管理画面タブ切り替え ---
-        function switchEditTab(tab) {
-            const tabs = ['notice', 'schedule', 'access'];
-            tabs.forEach(t => {
-                document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-                document.getElementById('view-edit-' + t).classList.toggle('hidden', t !== tab);
-            });
-            if (tab === 'notice') renderEditList();
-            if (tab === 'schedule') renderScheduleEditList();
-            if (tab === 'access') renderAccessEditList();
-        }
-
-        // --- 入室制限管理ロジック ---
-        function openAccessModal() {
-            document.getElementById('access-modal').classList.remove('hidden');
-            document.getElementById('acc-date').value = getYmd(new Date());
-        }
-        function closeAccessModal() { document.getElementById('access-modal').classList.add('hidden'); }
-        function saveAccess() {
-            const date = document.getElementById('acc-date').value;
-            const repeat = document.getElementById('acc-repeat').checked;
-            const start = document.getElementById('acc-start').value;
-            const end = document.getElementById('acc-end').value;
-            const reason = document.getElementById('acc-reason').value;
-            if(!start || !end) return alert("開始時間と終了時間を入力してください");
-            accessRef.push({ date, repeat, start, end, reason, timestamp: Date.now() });
-            closeAccessModal();
-        }
-        function renderAccessEditList() {
-            const container = document.getElementById('edit-access-list-container');
-            container.innerHTML = '';
-            if (accessData.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 py-10">データがありません</p>'; return; }
-            accessData.forEach(a => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center mb-2";
-                item.innerHTML = `
-                    <div>
-                        <span class="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded mr-2">${a.reason}</span>
-                        <span class="text-gray-500 text-sm font-bold">${a.repeat ? '毎日' : a.date}</span>
-                        <div class="font-bold text-gray-700 mt-1">${a.start} 〜 ${a.end}</div>
-                    </div>
-                    <button onclick="deleteAccess('${a.id}')" class="text-red-400 font-bold px-3 py-1 border border-red-200 rounded-lg">削除</button>
-                `;
-                container.appendChild(item);
-            });
-        }
-        function deleteAccess(id) { if(confirm("この制限設定を削除しますか？")) accessRef.child(id).remove(); }
-
-        // --- ダッシュボード表示ロジック ---
-
-        function updateAllViews() {
-            if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
-            if (!document.getElementById('screen-edit').classList.contains('hidden')) { renderEditList(); renderScheduleEditList(); renderAccessEditList(); }
-        }
-
-        function showScreen(screenId) {
-            ['screen-entrance', 'screen-dashboard', 'screen-edit'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('screen-' + screenId).classList.remove('hidden');
-            if (screenId === 'dashboard') {
-                updateDate(); generateQRCode(); globalPageIndex = 0; updateDashboard();
-                resetInterval();
-            } else if (screenId === 'edit') { switchEditTab('notice'); }
-        }
-
-        function resetInterval() {
-            if(window.pageInterval) clearInterval(window.pageInterval);
-            window.pageInterval = setInterval(nextPage, 10000);
-        }
-
-        function manualNextPage() { nextPage(); resetInterval(); }
-
-        function nextPage() {
-            const studentNotices = notices.filter(n => n.target === 'student');
-            const totalNoticePages = Math.ceil(studentNotices.length / ITEMS_PER_PAGE) || 1;
-            
-            // 現在時刻が入室制限中か判定
-            const activeAccess = getActiveAccess();
-            const accessPageCount = activeAccess ? 1 : 0;
-
-            const totalPages = 1 + totalNoticePages + accessPageCount; // 時間割 + 連絡事項 + (入室制限)
-            globalPageIndex = (globalPageIndex + 1) % totalPages;
-            updateDashboard();
-        }
-
-        function getActiveAccess() {
-            const now = new Date();
-            const todayStr = getYmd(now);
-            const nowTime = now.getHours() * 60 + now.getMinutes();
-            return accessData.find(a => {
-                const [hStart, mStart] = a.start.split(':').map(Number);
-                const [hEnd, mEnd] = a.end.split(':').map(Number);
-                const startVal = hStart * 60 + mStart;
-                const endVal = hEnd * 60 + mEnd;
-                const isCorrectDay = a.repeat || (a.date === todayStr);
-                return isCorrectDay && (nowTime >= startVal && nowTime <= endVal);
-            });
-        }
-
-        function updateDashboard() {
-            updateTopEventDisplay(); updateBottomUrgentTicker(); updateDate();
-            const container = document.getElementById('dashboard-main-content');
-            container.innerHTML = '';
-
-            const studentNotices = notices.filter(n => n.target === 'student');
-            const totalNoticePages = Math.ceil(studentNotices.length / ITEMS_PER_PAGE) || 1;
-            const activeAccess = getActiveAccess();
-
-            if (globalPageIndex === 0) {
-                renderSchedulePage(container);
-            } else if (globalPageIndex <= totalNoticePages) {
-                renderNoticePage(container, globalPageIndex - 1);
-            } else if (activeAccess) {
-                renderForbiddenPage(container, activeAccess);
-            } else {
-                globalPageIndex = 0; // 該当なしなら最初に戻る
-                renderSchedulePage(container);
-            }
-        }
-
-        // --- 画面レンダリング（復元・追加） ---
-
-        function renderSchedulePage(container) {
-            const schoolToday = getSchoolDate(0);
-            const schoolTomorrow = getSchoolDate(1);
-            const todayStr = getYmd(schoolToday);
-            const tomorrowStr = getYmd(schoolTomorrow);
-
-            const filterAndSort = (dateStr) => {
-                const filtered = scheduleData.filter(s => s.targetDate === dateStr);
-                const grouped = {};
-                filtered.forEach(s => { if(!grouped[s.class]) grouped[s.class] = []; grouped[s.class].push(s); });
-                return Object.keys(grouped).sort((a,b) => CONFIG.classes.indexOf(a) - CONFIG.classes.indexOf(b)).map(cls => ({
-                    class: cls, items: grouped[cls].sort((a,b) => a.period - b.period)
-                }));
-            };
-
-            const todayGroups = filterAndSort(todayStr);
-            const tomorrowGroups = filterAndSort(tomorrowStr);
-
-            const totalItems = todayGroups.reduce((acc, g) => acc + g.items.length, 0) + tomorrowGroups.reduce((acc, g) => acc + g.items.length, 0);
-            let fontSizeSubject = "text-2xl"; let fontSizePeriod = "text-lg"; let cardPadding = "py-2";
-            if (totalItems <= 4) { fontSizeSubject = "text-5xl"; fontSizePeriod = "text-2xl"; cardPadding = "py-6"; }
-            else if (totalItems <= 8) { fontSizeSubject = "text-4xl"; fontSizePeriod = "text-xl"; cardPadding = "py-4"; }
-            else if (totalItems <= 12) { fontSizeSubject = "text-3xl"; fontSizePeriod = "text-lg"; cardPadding = "py-3"; }
-
-            const wrap = document.createElement('div');
-            wrap.className = "flex h-full space-x-8 anim-cascade";
-
-            const createColumn = (label, dateObj, groups, textColor, badgeBg) => {
-                const dateText = getDisplayDate(dateObj);
-                let html = `<div class="flex-1 flex flex-col h-full overflow-hidden">
-                    <div class="pb-5 pl-2 flex items-center">
-                        <div class="day-badge ${textColor} ${badgeBg}">${label}</div>
-                        <span class="text-4xl ml-5 font-extrabold ${textColor}">${dateText}</span>
-                    </div>
-                    <div class="flex-1 overflow-hidden">`;
-                if (groups.length === 0) {
-                    html += `<p class="text-gray-400 text-3xl p-8 text-center mt-10">${label}の変更はありません</p>`;
-                } else {
-                    groups.forEach(g => {
-                        let rows = g.items.map(i => `<div class="flex items-center mb-1">
-                                <span class="${fontSizePeriod} bg-gray-200 px-3 py-0.5 rounded-lg text-gray-600 mr-4 font-bold w-32 text-center">${i.period}校時</span>
-                                <span class="${fontSizeSubject} font-black text-gray-800">${i.subject}</span>
-                            </div>`).join('');
-                        html += `<div class="change-card ${cardPadding}">
-                                <div class="font-black text-gray-700 text-4xl w-28 text-center">${g.class}</div>
-                                <div class="flex-1 px-4 flex flex-col justify-center">${rows}</div>
-                            </div>`;
-                    });
-                }
-                html += `</div></div>`;
-                return html;
-            };
-
-            wrap.innerHTML = createColumn("今日", schoolToday, todayGroups, "text-blue-600", "bg-blue-50") + createColumn("明日", schoolTomorrow, tomorrowGroups, "text-green-600", "bg-green-50");
-            container.appendChild(wrap);
-        }
-
-        function renderNoticePage(container, pageIdx) {
-            const list = notices.filter(n => n.target === 'student');
-            const start = pageIdx * ITEMS_PER_PAGE;
-            const displayList = list.slice(start, start + ITEMS_PER_PAGE);
-            let html = `<div class="w-full flex flex-col h-full anim-cascade"><div class="pb-5 pl-2 flex items-center">
-                <span class="text-4xl font-extrabold text-gray-600">連絡事項 (${pageIdx + 1}/${Math.ceil(list.length/ITEMS_PER_PAGE) || 1})</span>
-                </div><div class="flex-1">`;
-            if (displayList.length === 0) {
-                html += `<div class='text-gray-400 text-3xl p-8 text-center mt-10'>表示する連絡はありません</div>`;
-            } else {
-                displayList.forEach((n, i) => {
-                    html += `<div class="notice-card w-full bg-white">
-                        <div class="icon-section"><div class="teacher-badge">${n.teacherName || '不明'}</div></div>
-                        <h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3>
-                    </div>`;
+        noticesRef.on('value', snap => {
+            const d = snap.val(); notices = [];
+            if (d) Object.keys(d).forEach(k => notices.push({ id: k, ...d[k] }));
+            notices.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
+            updateAllViews();
+        });
+        scheduleRef.on('value', snap => {
+            const d = snap.val(); scheduleData = [];
+            if (d) Object.keys(d).forEach(k => scheduleData.push({ id: k, ...d[k] }));
+            cleanupOldData(); updateAllViews();
+        });
+        accessRef.on('value', snap => {
+            const d = snap.val(); accessData = [];
+            if (d) Object.keys(d).forEach(k => accessData.push({ id: k, ...d[k] }));
+            updateAllViews();
+        });
+        imageRef.on('value', snap => {
+            const d = snap.val(); imageData = [];
+            if (d) {
+                const today = getYmd(new Date());
+                Object.keys(d).forEach(k => {
+                    let item = { id: k, ...d[k] };
+                    if (item.lastUpdateDate !== today) {
+                        item.remainingDays -= 1;
+                        item.lastUpdateDate = today;
+                        if (item.remainingDays <= 0) {
+                            imageRef.child(k).remove();
+                            return;
+                        }
+                        imageRef.child(k).update({ remainingDays: item.remainingDays, lastUpdateDate: today });
+                    }
+                    imageData.push(item);
                 });
             }
-            html += `</div></div>`;
-            container.innerHTML = html;
+            updateAllViews();
+        });
+    } catch (e) { console.error(e); }
+
+    function getYmd(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+    function getDisplayDate(date) { return `${date.getMonth() + 1}月${date.getDate()}日(${(['日','月','火','水','木','金','土'])[date.getDay()]})`; }
+    function getSchoolDate(offset) {
+        let d = new Date();
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+        else if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        let count = 0;
+        while (count < offset) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) count++; }
+        return d;
+    }
+    function isAfterCutoff() { let n = new Date(); return (n.getHours() > 15 || (n.getHours() === 15 && n.getMinutes() >= 30)); }
+    function cleanupOldData() {
+        const todayStr = getYmd(new Date());
+        scheduleData.forEach(s => { if (s.targetDate && s.targetDate < todayStr) scheduleRef.child(s.id).remove(); });
+    }
+
+    function showScreen(screenId) {
+        ['screen-entrance', 'screen-dashboard', 'screen-edit'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        document.getElementById('screen-' + screenId).classList.remove('hidden');
+        if (screenId === 'dashboard') {
+            globalPageIndex = 0; updateDashboard(); resetInterval();
+        } else if (screenId === 'edit') {
+            switchEditTab('notice');
+        }
+    }
+
+    function switchEditTab(tab) {
+        ['notice', 'schedule', 'access', 'image'].forEach(t => {
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+            document.getElementById('view-edit-' + t).classList.toggle('hidden', t !== tab);
+        });
+        if (tab === 'notice') renderEditList();
+        if (tab === 'schedule') renderScheduleEditList();
+        if (tab === 'access') renderAccessEditList();
+        if (tab === 'image') renderImageEditList();
+    }
+
+    function resetInterval() {
+        if(window.pageInterval) clearInterval(window.pageInterval);
+        window.pageInterval = setInterval(nextPage, 10000);
+    }
+
+    function manualNextPage() { nextPage(); resetInterval(); }
+
+    function nextPage() {
+        const textPages = Math.ceil(notices.filter(n => n.target === 'student').length / ITEMS_PER_PAGE) || 1;
+        const vData = imageData.filter(i => i.orientation === 'v');
+        const vPages = Math.ceil(vData.length / 3) || 0;
+        const activeAccess = getActiveAccess() ? 1 : 0;
+        
+        const totalPages = 1 + textPages + vPages + activeAccess;
+        globalPageIndex = (globalPageIndex + 1) % totalPages;
+        updateDashboard();
+    }
+
+    // --- ダッシュボードの更新（ヘッダー制御追加） ---
+    function updateDashboard() {
+        updateTopEventDisplay();
+        updateBottomUrgentTicker();
+        document.getElementById('current-date').textContent = getDisplayDate(new Date());
+        
+        const container = document.getElementById('dashboard-main-content');
+        const header = document.getElementById('dashboard-header');
+        container.innerHTML = '';
+
+        const textNotices = notices.filter(n => n.target === 'student');
+        const textPages = Math.ceil(textNotices.length / ITEMS_PER_PAGE) || 1;
+        const vData = imageData.filter(i => i.orientation === 'v');
+        const vPages = Math.ceil(vData.length / 3) || 0;
+
+        // 縦画像ページの判定ロジック
+        const isVerticalImagePage = (globalPageIndex > textPages && globalPageIndex <= textPages + vPages);
+
+        // 縦画像ページならヘッダーを非表示、そうでなければ表示
+        if (isVerticalImagePage) {
+            header.classList.add('hidden');
+        } else {
+            header.classList.remove('hidden');
         }
 
-        // 入室制限ページの表示
-        function renderForbiddenPage(container, access) {
-            container.innerHTML = `
-                <div class="h-full w-full flex flex-col items-center justify-center bg-red-600 rounded-[40px] text-white shadow-2xl anim-cascade border-[15px] border-white">
-                    <div class="text-[14rem] font-black leading-none mb-2">入室禁止</div>
-                    <div class="text-6xl font-bold mb-10">${access.reason}のため</div>
-                    <div class="bg-white text-red-600 px-16 py-8 rounded-[30px] text-8xl font-black shadow-lg">
-                        ${access.start} 〜 ${access.end}
-                    </div>
-                    <div class="mt-12 text-4xl font-bold opacity-90">※急用を除き、入室を控えてください</div>
-                </div>
-            `;
+        if (globalPageIndex === 0) {
+            renderSchedulePage(container);
+        } else if (globalPageIndex <= textPages) {
+            renderNoticePage(container, globalPageIndex - 1);
+        } else if (isVerticalImagePage) {
+            renderVerticalImagePage(container, globalPageIndex - textPages - 1);
+        } else if (getActiveAccess()) {
+            renderForbiddenPage(container, getActiveAccess());
+        } else {
+            globalPageIndex = 0; updateDashboard();
         }
+    }
 
-        // --- その他の既存機能 ---
-        function updateTopEventDisplay() {
-            const list = notices.filter(n => n.target === 'event').map(n => n.title);
-            document.getElementById('top-event-container').textContent = list.length ? list.join("　　/　　") : "（行事予定なし）";
-        }
-        function updateBottomUrgentTicker() {
-            const badge = document.getElementById('urgent-badge-container');
-            const container = document.getElementById('urgent-text-container');
-            const list = notices.filter(n => n.target === 'urgent').map(n => n.title);
-            if (list.length > 0) {
-                badge.classList.remove('hidden'); container.textContent = list.join("　　　　");
-                container.className = "ticker-content text-4xl text-red-600 font-bold";
-            } else {
-                badge.classList.add('hidden'); container.textContent = "久慈翔北高校　生徒用デジタル掲示板";
-                container.className = "text-4xl text-black font-bold px-4 text-left"; 
-            }
-        }
-        function generateQRCode() { const c = document.getElementById('qrcode'); c.innerHTML = ""; new QRCode(c, { text:"https://kjs-hs.note.jp", width: 64, height: 64 }); }
-        function updateDate() { const el = document.getElementById('current-date'); if(el) el.textContent = getDisplayDate(new Date()); }
+    function getActiveAccess() {
+        const now = new Date();
+        const todayStr = getYmd(now);
+        const nowTime = now.getHours() * 60 + now.getMinutes();
+        return accessData.find(a => {
+            const [hs, ms] = a.start.split(':').map(Number);
+            const [he, me] = a.end.split(':').map(Number);
+            const isToday = a.repeat || a.date === todayStr;
+            return isToday && (nowTime >= hs * 60 + ms && nowTime <= he * 60 + me);
+        });
+    }
 
-        // 連絡事項管理
-        function renderEditList() {
-            const container = document.getElementById('edit-list-container'); container.innerHTML = '';
-            notices.forEach(n => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl shadow-sm border flex items-center justify-between cursor-pointer";
-                item.onclick = () => openModal('edit', n.id);
-                item.innerHTML = `<div class="flex items-center"><span class="font-bold text-gray-700">${n.title}</span></div><span class="text-gray-300">&rsaquo;</span>`;
-                container.appendChild(item);
+    function renderSchedulePage(container) {
+        const s0 = getSchoolDate(0), s1 = getSchoolDate(1);
+        const filter = (d) => {
+            const dayStr = getYmd(d);
+            const filtered = scheduleData.filter(s => s.targetDate === dayStr);
+            const grouped = {};
+            filtered.forEach(s => { if(!grouped[s.class]) grouped[s.class] = []; grouped[s.class].push(s); });
+            return Object.keys(grouped).sort((a,b) => CONFIG.classes.indexOf(a) - CONFIG.classes.indexOf(b)).map(c => ({ class: c, items: grouped[c].sort((a,b) => a.period - b.period) }));
+        };
+        const g0 = filter(s0), g1 = filter(s1);
+        const wrap = document.createElement('div');
+        wrap.className = "flex h-full space-x-8 anim-cascade";
+        const col = (label, date, groups, color, bg) => {
+            let html = `<div class="flex-1 flex flex-col h-full overflow-hidden"><div class="pb-5 pl-2 flex items-center"><div class="day-badge ${color} ${bg}">${label}</div><span class="text-4xl ml-5 font-extrabold ${color}">${getDisplayDate(date)}</span></div><div class="flex-1 overflow-hidden">`;
+            if (!groups.length) html += `<p class="text-gray-400 text-3xl p-8 text-center mt-10">変更なし</p>`;
+            else groups.forEach(g => {
+                let rows = g.items.map(i => `<div class="flex items-center mb-1"><span class="text-lg bg-gray-200 px-3 py-0.5 rounded-lg text-gray-600 mr-4 font-bold w-32 text-center">${i.period}校時</span><span class="text-3xl font-black text-gray-800">${i.subject}</span></div>`).join('');
+                html += `<div class="change-card py-4"><div class="font-black text-gray-700 text-4xl w-28 text-center">${g.class}</div><div class="flex-1 px-4 flex flex-col justify-center">${rows}</div></div>`;
             });
-        }
-        function openModal(mode, id = null) {
-            window.currentEditId = id; document.getElementById('edit-modal').classList.remove('hidden');
-            document.getElementById('modal-select-teacher').innerHTML = CONFIG.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-            if (mode === 'create') { document.getElementById('modal-title').textContent = "新規作成"; document.getElementById('modal-input-title').value = ""; document.getElementById('btn-delete').classList.add('hidden'); }
-            else { 
-                const data = notices.find(n => n.id === id);
-                document.getElementById('modal-input-title').value = data.title;
-                document.getElementById('modal-select-teacher').value = data.teacherName;
-                document.getElementById('btn-delete').classList.remove('hidden');
-            }
-        }
-        function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-        function saveData() {
-            const title = document.getElementById('modal-input-title').value;
-            const teacherName = document.getElementById('modal-select-teacher').value;
-            const target = document.querySelector('input[name="modalType"]:checked').value;
-            if (window.currentEditId) noticesRef.child(window.currentEditId).update({ title, teacherName, target });
-            else noticesRef.push({ title, teacherName, target, timestamp: Date.now() });
-            closeModal();
-        }
-        function deleteData() { if(confirm("削除しますか？")) { noticesRef.child(window.currentEditId).remove(); closeModal(); } }
+            return html + `</div></div>`;
+        };
+        wrap.innerHTML = col("今日", s0, g0, "text-blue-600", "bg-blue-50") + col("明日", s1, g1, "text-green-600", "bg-green-50");
+        container.appendChild(wrap);
+    }
 
-        // 時間割管理
-        function openScheduleModal() {
-            document.getElementById('schedule-modal').classList.remove('hidden');
-            const offset = isAfterCutoff() ? 1 : 0;
-            document.getElementById('label-today').textContent = getDisplayDate(getSchoolDate(0 + offset));
-            document.getElementById('label-tomorrow').textContent = getDisplayDate(getSchoolDate(1 + offset));
-            document.getElementById('label-afternext').textContent = getDisplayDate(getSchoolDate(2 + offset));
-            document.getElementById('sch-class').innerHTML = CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('sch-subject').innerHTML = CONFIG.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
-        }
-        function closeScheduleModal() { document.getElementById('schedule-modal').classList.add('hidden'); }
-        function saveSchedule() {
-            const radioVal = parseInt(document.querySelector('input[name="schDay"]:checked').value);
-            const targetDate = getYmd(getSchoolDate(radioVal + (isAfterCutoff() ? 1 : 0)));
-            scheduleRef.push({ targetDate, class: document.getElementById('sch-class').value, period: document.getElementById('sch-period').value, subject: document.getElementById('sch-subject').value, timestamp: Date.now() });
-            closeScheduleModal();
-        }
-        function renderScheduleEditList() {
-            const container = document.getElementById('edit-schedule-list-container'); container.innerHTML = '';
-            scheduleData.forEach(s => {
-                const item = document.createElement('div');
-                item.className = "bg-white p-4 rounded-xl shadow-sm border mb-2 flex justify-between items-center";
-                item.innerHTML = `<div><span class="text-xs bg-gray-100 px-2 py-1 rounded mr-2">${s.targetDate}</span><b>${s.class}</b> ${s.period}校時 ${s.subject}</div><button onclick="scheduleRef.child('${s.id}').remove()" class="text-red-400">削除</button>`;
-                container.appendChild(item);
+    function renderNoticePage(container, idx) {
+        const list = notices.filter(n => n.target === 'student');
+        const display = list.slice(idx * ITEMS_PER_PAGE, (idx + 1) * ITEMS_PER_PAGE);
+        let html = `<div class="w-full flex flex-col h-full anim-cascade"><div class="pb-5 pl-2 flex items-center"><span class="text-4xl font-extrabold text-gray-600">連絡事項</span></div><div class="flex-1">`;
+        display.forEach(n => {
+            html += `<div class="notice-card w-full bg-white"><div class="teacher-badge mr-8">${n.teacherName}</div><h3 class="text-notice-title text-gray-800 truncate w-full pt-1">${n.title}</h3></div>`;
+        });
+        container.innerHTML = html + `</div></div>`;
+    }
+
+    function renderVerticalImagePage(container, pIdx) {
+        const data = imageData.filter(i => i.orientation === 'v');
+        const display = data.slice(pIdx * 3, pIdx * 3 + 3);
+        let gridClass = "grid grid-cols-3 gap-10";
+        if (display.length === 1) gridClass = "flex justify-center";
+        
+        let html = `<div class="w-full h-full flex flex-col anim-cascade"><div class="flex-1 ${gridClass}">`;
+        display.forEach(item => {
+            html += `<div class="image-grid-item ${display.length===1?'w-1/3':'w-full'}">
+                        <div class="image-paper"><img src="${item.imageData}"></div>
+                        <div class="image-caption">${item.title}</div>
+                     </div>`;
+        });
+        container.innerHTML = html + `</div></div>`;
+    }
+
+    function renderForbiddenPage(container, a) {
+        container.innerHTML = `<div class="h-full w-full flex flex-col items-center justify-center bg-red-600 text-white anim-cascade border-[15px] border-white"><div class="text-[14rem] font-black leading-none mb-2">入室禁止</div><div class="text-6xl font-bold mb-10">${a.reason}のため</div><div class="bg-white text-red-600 px-16 py-8 rounded-[30px] text-8xl font-black shadow-lg">${a.start} 〜 ${a.end}</div></div>`;
+    }
+
+    // --- 管理ロジック ---
+    function openImageModal() {
+        window.currentOrientation = 'v';
+        document.getElementById('image-modal').classList.remove('hidden');
+    }
+    function closeImageModal() { document.getElementById('image-modal').classList.add('hidden'); }
+
+    async function saveImage() {
+        const fileInput = document.getElementById('img-file');
+        const title = document.getElementById('img-title').value;
+        const days = parseInt(document.getElementById('img-days').value);
+        if (!fileInput.files[0] || !title) return alert("画像とタイトルを入力してください");
+        
+        const btn = document.getElementById('btn-save-image');
+        btn.disabled = true; btn.textContent = "保存中...";
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            await imageRef.push({
+                title, imageData: e.target.result, remainingDays: days,
+                orientation: 'v',
+                lastUpdateDate: getYmd(new Date()), timestamp: Date.now()
             });
+            btn.disabled = false; btn.textContent = "保存する";
+            closeImageModal();
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function renderImageEditList() {
+        const c = document.getElementById('edit-image-list-container');
+        c.innerHTML = '';
+        imageData.forEach(img => {
+            const div = document.createElement('div');
+            div.className = "bg-white p-3 rounded-xl border flex justify-between items-center mb-1";
+            div.innerHTML = `<div class="flex items-center gap-4"><img src="${img.imageData}" class="w-16 h-12 object-contain bg-gray-100 border"><div><div class="font-bold text-sm">${img.title}</div><div class="text-xs text-gray-500">残り：${img.remainingDays}日</div></div></div><div class="flex gap-2"><button onclick="updateImageDays('${img.id}', ${img.remainingDays + 1})" class="px-2 py-1 bg-gray-100 rounded text-xs">+1日</button><button onclick="if(confirm('削除しますか？')) imageRef.child('${img.id}').remove()" class="text-red-500 border px-3 py-1 rounded text-xs">削除</button></div>`;
+            c.appendChild(div);
+        });
+    }
+
+    function updateImageDays(id, val) { imageRef.child(id).update({ remainingDays: val }); }
+
+    function updateAllViews() {
+        if (!document.getElementById('screen-dashboard').classList.contains('hidden')) updateDashboard();
+        if (!document.getElementById('screen-edit').classList.contains('hidden')) {
+            renderEditList(); renderScheduleEditList(); renderAccessEditList(); renderImageEditList();
         }
+    }
+
+    function updateTopEventDisplay() {
+        const list = notices.filter(n => n.target === 'event').map(n => n.title);
+        document.getElementById('top-event-container').textContent = list.length ? list.join("　/　") : "（行事予定なし）";
+    }
+
+    function updateBottomUrgentTicker() {
+        const badge = document.getElementById('urgent-badge-container');
+        const cont = document.getElementById('urgent-text-container');
+        const list = notices.filter(n => n.target === 'urgent').map(n => n.title);
+        if (list.length) {
+            badge.classList.remove('hidden');
+            cont.textContent = list.join("　　");
+            cont.className = "ticker-content text-4xl text-red-600 font-bold";
+        } else {
+            badge.classList.add('hidden');
+            cont.textContent = "久慈翔北高校　生徒用デジタル掲示板";
+            cont.className = "text-4xl text-black font-bold px-4";
+        }
+    }
+
+    function generateQRCode() {
+        const c = document.getElementById('qrcode');
+        c.innerHTML = "";
+        new QRCode(c, { text:"https://kjs-hs.note.jp", width: 64, height: 64 });
+    }
+
+    function renderEditList() {
+        const c = document.getElementById('edit-list-container');
+        c.innerHTML = '';
+        notices.forEach(n => {
+            const item = document.createElement('div');
+            item.className = "bg-white p-4 rounded-xl border flex justify-between cursor-pointer mb-1";
+            item.onclick = () => openModal('edit', n.id);
+            item.innerHTML = `<span class="font-bold">${n.title}</span><span class="text-gray-400 text-sm">by ${n.teacherName}</span>`;
+            c.appendChild(item);
+        });
+    }
+
+    function openModal(mode, id = null) {
+        window.currentEditId = id;
+        document.getElementById('edit-modal').classList.remove('hidden');
+        document.getElementById('modal-select-teacher').innerHTML = CONFIG.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+        if (mode === 'create') {
+            document.getElementById('modal-title').textContent = "新規作成";
+            document.getElementById('modal-input-title').value = "";
+            document.getElementById('btn-delete').classList.add('hidden');
+        } else {
+            const d = notices.find(n => n.id === id);
+            document.getElementById('modal-input-title').value = d.title;
+            document.getElementById('modal-select-teacher').value = d.teacherName;
+            document.getElementById('btn-delete').classList.remove('hidden');
+        }
+    }
+
+    function closeModal() { document.getElementById('edit-modal').classList.add('hidden'); }
+
+    function saveData() {
+        const title = document.getElementById('modal-input-title').value;
+        const teacherName = document.getElementById('modal-select-teacher').value;
+        const target = document.querySelector('input[name="modalType"]:checked').value;
+        if (window.currentEditId) noticesRef.child(window.currentEditId).update({ title, teacherName, target });
+        else noticesRef.push({ title, teacherName, target, timestamp: Date.now() });
+        closeModal();
+    }
+
+    function deleteData() { if(confirm("削除しますか？")) { noticesRef.child(window.currentEditId).remove(); closeModal(); } }
+
+    function openScheduleModal() {
+        document.getElementById('schedule-modal').classList.remove('hidden');
+        const off = isAfterCutoff() ? 1 : 0;
+        document.getElementById('label-today').textContent = getDisplayDate(getSchoolDate(0 + off));
+        document.getElementById('label-tomorrow').textContent = getDisplayDate(getSchoolDate(1 + off));
+        document.getElementById('label-afternext').textContent = getDisplayDate(getSchoolDate(2 + off));
+        document.getElementById('sch-class').innerHTML = CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('sch-subject').innerHTML = CONFIG.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function closeScheduleModal() { document.getElementById('schedule-modal').classList.add('hidden'); }
+
+    function saveSchedule() {
+        const off = isAfterCutoff() ? 1 : 0;
+        const day = parseInt(document.querySelector('input[name="schDay"]:checked').value);
+        scheduleRef.push({
+            targetDate: getYmd(getSchoolDate(day + off)),
+            class: document.getElementById('sch-class').value,
+            period: document.getElementById('sch-period').value,
+            subject: document.getElementById('sch-subject').value,
+            timestamp: Date.now()
+        });
+        closeScheduleModal();
+    }
+
+    function renderScheduleEditList() {
+        const c = document.getElementById('edit-schedule-list-container');
+        c.innerHTML = '';
+        scheduleData.sort((a,b)=>a.targetDate.localeCompare(b.targetDate)).forEach(s => {
+            const item = document.createElement('div');
+            item.className = "bg-white p-3 rounded border mb-1 flex justify-between items-center text-sm";
+            item.innerHTML = `<span>${s.targetDate} <b>${s.class}</b> ${s.period}校時 ${s.subject}</span><button onclick="scheduleRef.child('${s.id}').remove()" class="text-red-400 font-bold">削除</button>`;
+            c.appendChild(item);
+        });
+    }
+
+    function openAccessModal() {
+        document.getElementById('access-modal').classList.remove('hidden');
+        document.getElementById('acc-date').value = getYmd(new Date());
+    }
+
+    function closeAccessModal() { document.getElementById('access-modal').classList.add('hidden'); }
+
+    function saveAccess() {
+        const s = document.getElementById('acc-start').value, e = document.getElementById('acc-end').value;
+        if(!s || !e) return alert("入力エラー");
+        accessRef.push({
+            date: document.getElementById('acc-date').value,
+            repeat: document.getElementById('acc-repeat').checked,
+            start: s, end: e,
+            reason: document.getElementById('acc-reason').value,
+            timestamp: Date.now()
+        });
+        closeAccessModal();
+    }
+
+    function renderAccessEditList() {
+        const c = document.getElementById('edit-access-list-container');
+        c.innerHTML = '';
+        accessData.forEach(a => {
+            const item = document.createElement('div');
+            item.className = "bg-white p-3 rounded border mb-1 flex justify-between items-center text-xs";
+            item.innerHTML = `<div><b>${a.reason}</b> (${a.repeat?'毎日':a.date})<br>${a.start}〜${a.end}</div><button onclick="accessRef.child('${a.id}').remove()" class="text-red-400">削除</button>`;
+            c.appendChild(item);
+        });
+    }
+
+    generateQRCode();
 </script>
 </body>
 </html>
