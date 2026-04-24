@@ -159,10 +159,11 @@
     <p class="text-3xl font-bold text-blue-600">Connecting...</p>
 </div>
 
-<div id="screen-entrance" class="absolute inset-0 z-50 flex flex-col items-center justify-center space-y-8 bg-[#F0F2F5]">
-    <h1 class="text-5xl font-bold text-gray-700">生徒連絡用DB</h1>
+<div id="screen-entrance" class="absolute inset-0 z-50 flex flex-col items-center justify-center space-y-6 bg-[#F0F2F5]">
+    <h1 class="text-5xl font-bold text-gray-700 mb-4">生徒連絡用DB</h1>
     <button onclick="showScreen('dashboard')" class="w-80 bg-blue-600 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">大画面表示</button>
     <button onclick="showScreen('edit')" class="w-80 bg-gray-700 text-white py-6 rounded-2xl shadow-lg text-2xl font-bold hover:scale-105 transition">データ入力・管理</button>
+    <button onclick="showScreen('master')" class="w-80 bg-white text-gray-600 border-4 border-gray-300 py-4 rounded-2xl shadow-md text-xl font-bold hover:scale-105 transition">マスタ管理</button>
 </div>
 
 <div id="screen-dashboard" class="hidden h-full flex flex-col">
@@ -232,6 +233,28 @@
         <div id="view-edit-image" class="flex-1 flex flex-col overflow-hidden hidden p-4">
             <button onclick="openImageModal()" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mb-4">+ 画像（A4縦）を追加</button>
             <div class="flex-1 overflow-y-auto space-y-2" id="edit-image-list-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="screen-master" class="hidden h-full bg-gray-50 fixed inset-0 z-50 overflow-hidden flex flex-col">
+    <div class="max-w-4xl mx-auto w-full h-full flex flex-col shadow-2xl bg-white">
+        <div class="bg-gray-800 text-white px-4 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold">マスタ管理</h2>
+            <button onclick="showScreen('entrance')" class="bg-gray-600 px-4 py-2 rounded-lg font-bold">戻る</button>
+        </div>
+        <div class="flex bg-white shadow-sm z-10">
+            <button onclick="switchMasterTab('m-teacher')" id="tab-m-teacher" class="tab-btn flex-1 py-5 text-lg font-bold active">教員名</button>
+            <button onclick="switchMasterTab('m-subject')" id="tab-m-subject" class="tab-btn flex-1 py-5 text-lg font-bold">授業名</button>
+            <button onclick="switchMasterTab('m-class')" id="tab-m-class" class="tab-btn flex-1 py-5 text-lg font-bold">クラス名</button>
+        </div>
+
+        <div class="p-6 flex-1 overflow-y-auto">
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="master-input" class="flex-1 p-4 border-2 rounded-xl outline-none focus:border-blue-500 font-bold" placeholder="新しく追加する名前...">
+                <button onclick="addMasterData()" class="bg-blue-600 text-white px-8 rounded-xl font-bold text-lg">追加</button>
+            </div>
+            <div id="master-list-container" class="space-y-2"></div>
         </div>
     </div>
 </div>
@@ -318,12 +341,6 @@
 </div>
 
 <script>
-    const CONFIG = {
-        classes: ['TE1', 'TE2', 'ME3', 'CE3'],
-        subjects: ['国表', '現国', '言語', '地総', '公共', '歴総', '数Ⅰ', '数Ⅱ', '科人', '物基', '家総', '家基', '体育', '保健', '英Ⅰ', '英Ⅱ', '美術', '機設', '工基', '実習', '課研', '生産', '情数', '電機', '製図', '土施', '社基', '測量', '土基', '土設', '建計', '建施', '建構', '建設', '建法', 'LHR', '学校行事'],
-        teachers: [ { name: '山﨑萌' },  { name: '浅水' }, { name: '多田' }, { name: '山﨑泰' }, { name: '鶴嶋' }, { name: '内村' }, { name: '吉田' }, { name: '熊谷' }, { name: '山口香' }, { name: '山口正' }, { name: '永田' }, { name: '谷口' }, { name: '野田' }, { name: '福士' }, { name: '木澤畑' }, { name: '日當' }, { name: '梅内' }, { name: '佐藤' }, { name: '千葉' },  { name: '北田' }, { name: '芦渡' },{ name: '山崎乃' }, { name: '事務室' }, { name: '副校長' } ]
-    };
-
     const firebaseConfig = {
         apiKey: "AIzaSyAb5GbSvT8YCOJt6LYGWxLQvQLspFU3nWM",
         authDomain: "school-map-quest.firebaseapp.com",
@@ -335,9 +352,13 @@
     };
 
     let notices = [], scheduleData = [], accessData = [], imageData = [];
+    let masterTeachers = [], masterSubjects = [], masterClasses = [];
     let noticesRef, scheduleRef, accessRef, imageRef;
+    let teachersRef, subjectsRef, classesRef;
+    
     let globalPageIndex = 0;
     const ITEMS_PER_PAGE = 5;
+    let currentMasterMode = 'm-teacher';
 
     try {
         firebase.initializeApp(firebaseConfig);
@@ -347,10 +368,16 @@
         accessRef = db.ref('access_restrictions');
         imageRef = db.ref('image_notices');
 
+        // マスタ用レファレンス
+        teachersRef = db.ref('master/teachers');
+        subjectsRef = db.ref('master/subjects');
+        classesRef = db.ref('master/classes');
+
         firebase.auth().signInAnonymously().then(() => {
             document.getElementById('loading').classList.add('hidden');
         });
 
+        // 既存データの読み込み
         noticesRef.on('value', snap => {
             const d = snap.val(); notices = [];
             if (d) Object.keys(d).forEach(k => notices.push({ id: k, ...d[k] }));
@@ -387,6 +414,24 @@
             }
             updateAllViews();
         });
+
+        // マスタデータのリアルタイム同期
+        teachersRef.on('value', snap => {
+            masterTeachers = []; const d = snap.val();
+            if (d) Object.keys(d).forEach(k => masterTeachers.push({id: k, name: d[k].name}));
+            if (currentMasterMode === 'm-teacher') renderMasterList();
+        });
+        subjectsRef.on('value', snap => {
+            masterSubjects = []; const d = snap.val();
+            if (d) Object.keys(d).forEach(k => masterSubjects.push({id: k, name: d[k].name}));
+            if (currentMasterMode === 'm-subject') renderMasterList();
+        });
+        classesRef.on('value', snap => {
+            masterClasses = []; const d = snap.val();
+            if (d) Object.keys(d).forEach(k => masterClasses.push({id: k, name: d[k].name}));
+            if (currentMasterMode === 'm-class') renderMasterList();
+        });
+
     } catch (e) { console.error(e); }
 
     function getYmd(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
@@ -406,12 +451,14 @@
     }
 
     function showScreen(screenId) {
-        ['screen-entrance', 'screen-dashboard', 'screen-edit'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        ['screen-entrance', 'screen-dashboard', 'screen-edit', 'screen-master'].forEach(id => document.getElementById(id).classList.add('hidden'));
         document.getElementById('screen-' + screenId).classList.remove('hidden');
         if (screenId === 'dashboard') {
             globalPageIndex = 0; updateDashboard(); resetInterval();
         } else if (screenId === 'edit') {
             switchEditTab('notice');
+        } else if (screenId === 'master') {
+            switchMasterTab('m-teacher');
         }
     }
 
@@ -424,6 +471,54 @@
         if (tab === 'schedule') renderScheduleEditList();
         if (tab === 'access') renderAccessEditList();
         if (tab === 'image') renderImageEditList();
+    }
+
+    // --- マスタ管理ロジック ---
+    function switchMasterTab(tab) {
+        currentMasterMode = tab;
+        ['m-teacher', 'm-subject', 'm-class'].forEach(t => {
+            document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+        });
+        document.getElementById('master-input').value = "";
+        renderMasterList();
+    }
+
+    function getMasterRef() {
+        if (currentMasterMode === 'm-teacher') return teachersRef;
+        if (currentMasterMode === 'm-subject') return subjectsRef;
+        return classesRef;
+    }
+
+    function getMasterData() {
+        if (currentMasterMode === 'm-teacher') return masterTeachers;
+        if (currentMasterMode === 'm-subject') return masterSubjects;
+        return masterClasses;
+    }
+
+    function addMasterData() {
+        const val = document.getElementById('master-input').value.trim();
+        if (!val) return;
+        getMasterRef().push({ name: val });
+        document.getElementById('master-input').value = "";
+    }
+
+    function deleteMasterData(id) {
+        if (confirm("この項目を削除しますか？")) {
+            getMasterRef().child(id).remove();
+        }
+    }
+
+    function renderMasterList() {
+        const c = document.getElementById('master-list-container');
+        c.innerHTML = '';
+        const data = getMasterData();
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm";
+            div.innerHTML = `<span class="text-xl font-bold text-gray-700">${item.name}</span>
+                             <button onclick="deleteMasterData('${item.id}')" class="text-red-500 font-bold px-4 py-2 border border-red-200 rounded-lg hover:bg-red-50">削除</button>`;
+            c.appendChild(div);
+        });
     }
 
     function resetInterval() {
@@ -444,7 +539,6 @@
         updateDashboard();
     }
 
-    // --- ダッシュボードの更新（ヘッダー制御追加） ---
     function updateDashboard() {
         updateTopEventDisplay();
         updateBottomUrgentTicker();
@@ -459,10 +553,8 @@
         const vData = imageData.filter(i => i.orientation === 'v');
         const vPages = Math.ceil(vData.length / 3) || 0;
 
-        // 縦画像ページの判定ロジック
         const isVerticalImagePage = (globalPageIndex > textPages && globalPageIndex <= textPages + vPages);
 
-        // 縦画像ページならヘッダーを非表示、そうでなければ表示
         if (isVerticalImagePage) {
             header.classList.add('hidden');
         } else {
@@ -501,7 +593,10 @@
             const filtered = scheduleData.filter(s => s.targetDate === dayStr);
             const grouped = {};
             filtered.forEach(s => { if(!grouped[s.class]) grouped[s.class] = []; grouped[s.class].push(s); });
-            return Object.keys(grouped).sort((a,b) => CONFIG.classes.indexOf(a) - CONFIG.classes.indexOf(b)).map(c => ({ class: c, items: grouped[c].sort((a,b) => a.period - b.period) }));
+            
+            // クラス順にソートするために、現在のマスタの順序を使用
+            const classOrder = masterClasses.map(c => c.name);
+            return Object.keys(grouped).sort((a,b) => classOrder.indexOf(a) - classOrder.indexOf(b)).map(c => ({ class: c, items: grouped[c].sort((a,b) => a.period - b.period) }));
         };
         const g0 = filter(s0), g1 = filter(s1);
         const wrap = document.createElement('div');
@@ -549,7 +644,6 @@
         container.innerHTML = `<div class="h-full w-full flex flex-col items-center justify-center bg-red-600 text-white anim-cascade border-[15px] border-white"><div class="text-[14rem] font-black leading-none mb-2">入室禁止</div><div class="text-6xl font-bold mb-10">${a.reason}のため</div><div class="bg-white text-red-600 px-16 py-8 rounded-[30px] text-8xl font-black shadow-lg">${a.start} 〜 ${a.end}</div></div>`;
     }
 
-    // --- 管理ロジック ---
     function openImageModal() {
         window.currentOrientation = 'v';
         document.getElementById('image-modal').classList.remove('hidden');
@@ -639,7 +733,10 @@
     function openModal(mode, id = null) {
         window.currentEditId = id;
         document.getElementById('edit-modal').classList.remove('hidden');
-        document.getElementById('modal-select-teacher').innerHTML = CONFIG.teachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+        
+        // 教員マスタからセレクトボックスを生成
+        document.getElementById('modal-select-teacher').innerHTML = masterTeachers.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+        
         if (mode === 'create') {
             document.getElementById('modal-title').textContent = "新規作成";
             document.getElementById('modal-input-title').value = "";
@@ -671,8 +768,10 @@
         document.getElementById('label-today').textContent = getDisplayDate(getSchoolDate(0 + off));
         document.getElementById('label-tomorrow').textContent = getDisplayDate(getSchoolDate(1 + off));
         document.getElementById('label-afternext').textContent = getDisplayDate(getSchoolDate(2 + off));
-        document.getElementById('sch-class').innerHTML = CONFIG.classes.map(c => `<option value="${c}">${c}</option>`).join('');
-        document.getElementById('sch-subject').innerHTML = CONFIG.subjects.map(s => `<option value="${s}">${s}</option>`).join('');
+        
+        // クラスと授業のマスタを反映
+        document.getElementById('sch-class').innerHTML = masterClasses.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        document.getElementById('sch-subject').innerHTML = masterSubjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
     }
 
     function closeScheduleModal() { document.getElementById('schedule-modal').classList.add('hidden'); }
